@@ -1,0 +1,244 @@
+.item-page {
+  font-family: var(--font-base);
+  background: transparent;
+  min-height: 100vh;
+  color: var(--text);
+}
+
+/* NAV */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+
+.logo-icon {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-strong));
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  box-shadow: var(--shadow-glow);
+}
+
+.logo-text {
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.nav-links .active {
+  color: var(--color-primary-strong);
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  background: rgba(26, 166, 143, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+}
+
+/* LAYOUT */
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 2.5rem 2rem;
+}
+
+.breadcrumb {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.layout {
+  display: flex;
+  gap: 2rem;
+}
+
+.left {
+  flex: 7;
+}
+
+.right {
+  flex: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* IMAGE */
+.image-card {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-card);
+}
+
+.image-card img {
+  width: 100%;
+  height: auto;
+}
+
+.privacy-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+.privacy-overlay .big {
+  font-size: 48px;
+  color: var(--color-primary-strong);
+}
+
+/* CARDS */
+.description-card,
+.details-card,
+.action-card,
+.finder-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(230, 223, 214, 0.9);
+  box-shadow: var(--shadow-card);
+}
+
+.info-box {
+  display: flex;
+  gap: 1rem;
+  background: rgba(26, 166, 143, 0.1);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-top: 1rem;
+}
+
+.status {
+  background: rgba(26, 166, 143, 0.2);
+  color: var(--color-primary-strong);
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border-radius: 20px;
+  font-weight: 700;
+}
+
+.detail-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.detail-row small {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+/* BUTTONS */
+.primary-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-strong));
+  border: none;
+  padding: 1rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #06241e;
+  box-shadow: var(--shadow-glow);
+}
+
+.outline-btn {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.disclaimer {
+  font-size: 0.75rem;
+  text-align: center;
+  margin-top: 1rem;
+  color: var(--color-text-muted);
+}
+
+/* Finder */
+.finder-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Similar */
+.similar-section {
+  margin-top: 4rem;
+}
+
+.similar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1.5rem;
+}
+
+.mini-card img {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  box-shadow: var(--shadow-soft);
+}
+
+/* Footer */
+.footer {
+  margin-top: 5rem;
+  padding: 2rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.6);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+}
+
+@media (max-width: 960px) {
+  .layout {
+    flex-direction: column;
+  }
+  .nav-links {
+    display: none;
+  }
+}
