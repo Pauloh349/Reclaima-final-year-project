@@ -1,26 +1,22 @@
 import { Link } from "react-router-dom";
+import NavBar from "../components/NavBar";
 import "../styles/Legal.css";
 
 const TermsOfService = () => {
   return (
     <div className="legal-page">
-      <nav className="legal-nav">
-        <div className="legal-container nav-inner">
-          <div className="logo">
-            <div className="logo-icon">
-              <span className="material-icons">gavel</span>
-            </div>
-            <span className="logo-text">Reclaima</span>
-          </div>
-          <div className="nav-links">
-            <Link to="/home">Dashboard</Link>
-            <Link to="/signin">Sign In</Link>
-            <Link to="/signup" className="nav-cta">
-              Create Account
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <NavBar
+        icon="gavel"
+        links={[
+          { label: "Dashboard", to: "/home" },
+          { label: "Sign In", to: "/signin" },
+        ]}
+        rightContent={
+          <Link to="/signup" className="rc-navbar-cta">
+            Create Account
+          </Link>
+        }
+      />
 
       <main className="legal-container legal-content">
         <header className="legal-hero">

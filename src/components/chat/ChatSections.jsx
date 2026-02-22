@@ -1,66 +1,70 @@
+import { Link } from "react-router-dom";
+import NavBar from "../NavBar";
+
 export function ChatNavbar() {
   return (
-    <nav className="chat-nav">
-      <div className="logo">
-        <span className="material-icons">rebase_edit</span>
-        <strong>Reclaima</strong>
-      </div>
-
-      <div className="nav-links">
-        <a href="#">Browse Lost Items</a>
-        <a href="#">Report Found</a>
-        <img
-          src="https://via.placeholder.com/40"
-          alt="Profile"
-          className="nav-avatar"
-        />
-      </div>
-    </nav>
+    <NavBar
+      icon="rebase_edit"
+      links={[
+        { label: "Browse Lost Items", to: "/matches" },
+        { label: "Report Found", to: "/found" },
+        { label: "Messages", to: "/chat/1", active: true },
+      ]}
+      rightContent={
+        <Link className="rc-navbar-user" to="/profile">
+          <img
+            src="/src/assets/user-icon.jpg"
+            alt="Profile"
+            className="nav-avatar"
+          />
+        </Link>
+      }
+    />
   );
 }
 
 export function ItemHeader() {
   return (
-    <div className="item-header">
+    <section className="chat-item-header">
       <img
-        src="https://via.placeholder.com/80"
+        src="/src/assets/user-icon2.jpg"
         alt="Item"
-        className="item-img"
+        className="chat-item-image"
       />
 
-      <div className="item-info">
-        <span className="badge">Found Item</span>
+      <div className="chat-item-info">
+        <span className="chat-badge">Found Item</span>
         <h1>Blue Hydro Flask</h1>
-        <p className="location">
+        <p className="chat-location">
           <span className="material-icons">location_on</span>
           Main Library, 2nd Floor
         </p>
       </div>
 
-      <div className="item-meta">
-        <button className="link-btn">View Item Details</button>
+      <div className="chat-item-meta">
+        <button className="text-btn">View Item Details</button>
         <small>Status: Coordination in progress</small>
       </div>
-    </div>
+    </section>
   );
 }
 
 export function ChatContainer() {
   return (
-    <div className="chat-container">
+    <section className="chat-panel">
       <SafetyBanner />
       <Messages />
       <MessageInput />
-    </div>
+    </section>
   );
 }
 
 function SafetyBanner() {
   return (
-    <div className="safety-banner">
+    <div className="safety-strip">
       <span className="material-icons">security</span>
       <div>
-        <strong>Safety First</strong>
+        <strong>Safety Reminder</strong>
         <p>Meet in public campus locations and verify items before exchange.</p>
       </div>
     </div>
@@ -69,8 +73,8 @@ function SafetyBanner() {
 
 function Messages() {
   return (
-    <div className="messages">
-      <div className="date-divider">Today</div>
+    <div className="chat-messages">
+      <div className="date-pill">Today</div>
 
       <Message
         sender="Sarah (Finder)"
@@ -91,7 +95,10 @@ function Messages() {
         time="10:18 AM"
       />
 
-      <SuggestionChips />
+      <div className="suggestion-chips">
+        <button>That works for me!</button>
+        <button>Can we meet at the Library instead?</button>
+      </div>
     </div>
   );
 }
@@ -101,40 +108,31 @@ function Message({ sender, text, time, isOwn }) {
     <div className={`message-row ${isOwn ? "own" : ""}`}>
       {!isOwn && (
         <img
-          src="https://via.placeholder.com/32"
+          src="/src/assets/user-icon2.jpg"
           alt="Avatar"
           className="avatar"
         />
       )}
 
-      <div className="bubble-group">
-        <span className="sender">{sender}</span>
-        <div className={`bubble ${isOwn ? "own-bubble" : ""}`}>{text}</div>
-        <span className="time">{time}</span>
+      <div className="message-body">
+        <span className="message-sender">{sender}</span>
+        <div className={`message-bubble ${isOwn ? "own" : ""}`}>{text}</div>
+        <span className="message-time">{time}</span>
       </div>
-    </div>
-  );
-}
-
-function SuggestionChips() {
-  return (
-    <div className="suggestions">
-      <button>That works for me!</button>
-      <button>Can we meet at the Library instead?</button>
     </div>
   );
 }
 
 function MessageInput() {
   return (
-    <div className="chat-input">
-      <button className="icon-btn">
+    <div className="chat-input-bar">
+      <button className="icon-btn" aria-label="Attach file">
         <span className="material-icons">add_circle_outline</span>
       </button>
 
       <textarea placeholder="Type a message..." rows="1" />
 
-      <button className="send-btn">
+      <button className="send-btn" aria-label="Send message">
         <span className="material-icons">send</span>
       </button>
     </div>
@@ -143,9 +141,9 @@ function MessageInput() {
 
 export function ChatFooter() {
   return (
-    <div className="chat-footer">
+    <footer className="chat-footer">
       <p>
-        Need help? <a href="#">Contact Campus Security</a>
+        Need help? <a href="/help">Contact Support</a>
       </p>
 
       <div className="footer-actions">
@@ -156,6 +154,6 @@ export function ChatFooter() {
 
         <button>Archive Chat</button>
       </div>
-    </div>
+    </footer>
   );
 }

@@ -1,244 +1,145 @@
-/* Base Styles */
-.signup-page {
+.auth-page {
+  min-height: 100vh;
   font-family: var(--font-base);
-  background: transparent;
   color: var(--text);
-  margin: 0;
-  padding: 0 1.5rem;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem;
+}
+
+.auth-shell {
+  width: min(430px, 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: 100vh;
 }
 
-/* Header / Logo */
-.header {
-  text-align: center;
-  margin-bottom: 2.5rem;
-}
-.logo-container {
-  display: flex;
+.auth-brand {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  margin-bottom: 0.5rem;
+  gap: 0.55rem;
+  margin-bottom: 0.95rem;
+  font-weight: 700;
+  font-size: 1.15rem;
 }
-.logo-icon {
-  width: 2.6rem;
-  height: 2.6rem;
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-strong));
-  border-radius: 0.7rem;
+  color: #06241e;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-glow);
 }
-.logo-icon .material-icons {
-  color: #06241e;
-}
-.logo-text {
-  font-size: 1.6rem;
-  font-weight: 700;
-}
-.logo-subtitle {
-  color: var(--color-text-muted);
-  font-weight: 600;
-}
 
-/* Auth Card */
 .auth-card {
   width: 100%;
-  max-width: 26rem;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 1rem;
-  box-shadow: var(--shadow-card);
+  background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(230, 223, 214, 0.9);
-  overflow: hidden;
+  border-radius: 14px;
+  padding: 1.35rem;
 }
-.auth-content {
-  padding: 2.2rem;
-}
+
 .auth-header h1 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
+  margin: 0;
+  font-size: 1.4rem;
 }
+
 .auth-header p {
+  margin: 0.35rem 0 0;
   color: var(--color-text-muted);
   font-size: 0.9rem;
 }
 
-/* Form Styles */
-.form-group {
-  margin-bottom: 1.5rem;
+.auth-form {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.45rem;
 }
-.form-group label {
-  display: block;
+
+.auth-form label {
+  font-size: 0.82rem;
   font-weight: 700;
-  font-size: 0.85rem;
-  margin-bottom: 0.35rem;
+  margin-top: 0.3rem;
 }
-.input-wrapper {
+
+.input-row {
   position: relative;
 }
-.input-wrapper input {
+
+.input-row input {
   width: 100%;
-  padding: 0.7rem 0.85rem 0.7rem 2.6rem;
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.7rem 0.78rem 0.7rem 2.3rem;
   outline: none;
-  font-size: 0.9rem;
-  background: rgba(255, 255, 255, 0.9);
-}
-.input-wrapper .input-icon {
-  position: absolute;
-  left: 0.8rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-text-muted);
-  font-size: 1rem;
-  pointer-events: none;
-}
-.visibility-toggle {
-  position: absolute;
-  right: 0.8rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-muted);
-  font-size: 1rem;
-}
-.form-note {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  margin-top: 0.25rem;
 }
 
-/* Button */
+.input-icon {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  color: var(--color-text-muted);
+}
+
 .btn-primary {
-  width: 100%;
+  margin-top: 0.6rem;
+  border: none;
+  border-radius: 10px;
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-strong));
   color: #06241e;
   font-weight: 700;
-  padding: 0.85rem;
-  border-radius: 0.75rem;
-  border: none;
-  cursor: pointer;
-  display: flex;
+  padding: 0.7rem 0.95rem;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  box-shadow: var(--shadow-glow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.btn-primary:hover {
-  transform: translateY(-2px);
-}
-.btn-primary:active {
-  transform: translateY(0);
+  gap: 0.35rem;
+  cursor: pointer;
 }
 
-/* Auth Footer */
 .auth-footer {
-  text-align: center;
+  margin-top: 1rem;
   border-top: 1px solid var(--border);
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
+  padding-top: 0.9rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.86rem;
 }
+
 .auth-footer a {
   color: var(--color-primary-strong);
   font-weight: 700;
   text-decoration: none;
 }
-.auth-footer a:hover {
-  text-decoration: underline;
-}
 
-/* Illustrative Footer */
-.illustrative-footer {
-  margin-top: 3rem;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  max-width: 26rem;
-  width: 100%;
-}
-.feature-card {
-  background: rgba(255, 255, 255, 0.75);
-  padding: 1rem;
-  border-radius: 0.9rem;
-  border: 1px solid rgba(26, 166, 143, 0.15);
+.page-footer {
+  margin-top: 0.9rem;
   text-align: center;
-  animation: fadeUp 0.7s ease both;
-}
-.feature-card:nth-child(2) {
-  animation-delay: 0.12s;
-}
-.feature-icon {
-  width: 2.1rem;
-  height: 2.1rem;
-  background: rgba(26, 166, 143, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.5rem;
-}
-.feature-icon .material-icons {
-  color: var(--color-primary);
-  font-size: 1rem;
-}
-.feature-card h3 {
-  font-size: 0.9rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-.feature-card p {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
 }
 
-/* Decorative Elements */
-.decorative-bottom,
-.decorative-top {
-  position: fixed;
-  width: 22rem;
-  height: 22rem;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(26, 166, 143, 0.18), transparent 70%);
-  filter: blur(50px);
-  z-index: -10;
-}
-.decorative-bottom {
-  bottom: -6rem;
-  left: -6rem;
-}
-.decorative-top {
-  top: -6rem;
-  right: -6rem;
-}
-
-/* Footer */
-.signup-page footer {
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  margin-top: 3rem;
-}
-.signup-page footer .footer-links {
-  margin-top: 0.5rem;
+.footer-links {
   display: flex;
   justify-content: center;
-  gap: 1rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
-.signup-page footer .footer-links a {
-  color: var(--color-text-muted);
+
+.footer-links a {
   text-decoration: none;
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
 }
-.signup-page footer .footer-links a:hover {
-  color: var(--color-primary);
+
+.page-footer p {
+  margin: 0.5rem 0 0;
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
 }

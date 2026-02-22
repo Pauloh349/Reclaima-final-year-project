@@ -1,26 +1,22 @@
 import { Link } from "react-router-dom";
+import NavBar from "../components/NavBar";
 import "../styles/HelpCenter.css";
 
 const HelpCenter = () => {
   return (
     <div className="help-page">
-      <nav className="help-nav">
-        <div className="help-container nav-inner">
-          <div className="logo">
-            <div className="logo-icon">
-              <span className="material-icons">support_agent</span>
-            </div>
-            <span className="logo-text">Reclaima</span>
-          </div>
-          <div className="nav-links">
-            <Link to="/home">Dashboard</Link>
-            <Link to="/signin">Sign In</Link>
-            <Link to="/signup" className="nav-cta">
-              Create Account
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <NavBar
+        icon="support_agent"
+        links={[
+          { label: "Dashboard", to: "/home" },
+          { label: "Sign In", to: "/signin" },
+        ]}
+        rightContent={
+          <Link to="/signup" className="rc-navbar-cta">
+            Create Account
+          </Link>
+        }
+      />
 
       <main className="help-container help-content">
         <header className="help-hero">

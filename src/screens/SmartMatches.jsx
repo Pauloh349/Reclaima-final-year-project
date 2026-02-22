@@ -1,116 +1,115 @@
 import "../styles/SmartMatches.css";
 import MatchCard from "../components/smart-matches/MatchCard";
+import NavBar from "../components/NavBar";
+import laptopCarrier from "../assets/laptop-carrier.webp";
+import paddedBag from "../assets/padded-bag.jpg";
+import techBag from "../assets/tech-bag.jpg";
 
 export default function SmartMatches() {
+  const matches = [
+    {
+      image: laptopCarrier,
+      title: "Blue Laptop Carrier",
+      category: "Bags and Carriers",
+      location: "Engineering Library, Floor 2",
+      date: "Feb 18, 2026 • 10:15 AM",
+      confidence: 98,
+      status: "High confidence",
+    },
+    {
+      image: paddedBag,
+      title: "Dark Blue Padded Bag",
+      category: "Bags and Carriers",
+      location: "Student Union Cafeteria",
+      date: "Feb 18, 2026 • 2:30 PM",
+      confidence: 75,
+      status: "Review suggested",
+    },
+    {
+      image: techBag,
+      title: "Tech Backpack, Navy",
+      category: "Backpacks",
+      location: "Bio-Tech Lab Corridor",
+      date: "Feb 17, 2026 • 9:00 AM",
+      confidence: 92,
+      status: "High confidence",
+    },
+  ];
+
   return (
     <div className="smart-matches-page">
-      {/* Navigation */}
-      <nav className="nav">
-        <div className="nav-left">
-          <div className="logo-icon">
-            <span className="material-icons">search</span>
-          </div>
-          <span className="logo-text">Reclaima</span>
-        </div>
-
-        <div className="nav-links">
-          <a href="#">Dashboard</a>
-          <a href="#" className="active">
-            My Lost Items
-          </a>
-          <a href="#">Campus Map</a>
-        </div>
-
-        <div className="nav-right">
-          <button className="icon-btn">
-            <span className="material-icons">notifications</span>
-          </button>
-          <div className="avatar">
-            <img src="https://via.placeholder.com/100" alt="profile" />
-          </div>
-        </div>
-      </nav>
-
-      <main className="container">
-        {/* Header */}
-        <div className="page-header">
-          <h1>Smart Matches Found</h1>
-          <p>
-            Our AI found 12 potential matches for your
-            <strong> "Blue Laptop Bag"</strong>.
-          </p>
-        </div>
-
-        <div className="content-layout">
-          {/* Sidebar */}
-          <aside className="sidebar">
-            <div className="card">
-              <h3>Filter Results</h3>
-
-              <label>Refine Search</label>
-              <input type="text" placeholder="Search keywords..." />
-
-              <label>Campus Zone</label>
-              <div className="checkbox-group">
-                <label>
-                  <input type="checkbox" defaultChecked /> Main Library
-                </label>
-                <label>
-                  <input type="checkbox" /> Student Union
-                </label>
-                <label>
-                  <input type="checkbox" defaultChecked /> Science Building
-                </label>
-                <label>
-                  <input type="checkbox" /> Gymnasium
-                </label>
-              </div>
-
-              <label>Time Found</label>
-              <select defaultValue="7">
-                <option value="1">Last 24 Hours</option>
-                <option value="7">Last 7 Days</option>
-                <option value="30">Last 30 Days</option>
-              </select>
-
-              <button className="secondary-btn">Reset Filters</button>
+      <NavBar
+        icon="search"
+        links={[
+          { label: "Dashboard", to: "/home" },
+          { label: "My Lost Items", to: "/matches", active: true },
+          { label: "Campus Map", to: "/lost/zone" },
+        ]}
+        rightContent={
+          <>
+            <button className="rc-navbar-icon-btn" aria-label="Notifications">
+              <span className="material-icons">notifications</span>
+            </button>
+            <div className="avatar">
+              <img src="https://via.placeholder.com/100" alt="profile" />
             </div>
-          </aside>
+          </>
+        }
+      />
 
-          {/* Match Grid */}
-          <div className="grid">
-            <MatchCard
-              image="../src/assets/laptop-carrier.webp"
-              title="Blue Laptop Carrier"
-              location="Engineering Library - Floor 2"
-              date="Found Nov 14 • 10:15 AM"
-              confidence="98% MATCH"
-              high
-            />
+      <main className="matches-shell">
+        <header className="matches-header">
+          <h1>Smart Matches</h1>
+          <p>
+            12 possible matches for <strong>Blue Laptop Bag</strong>
+          </p>
+        </header>
 
-            <MatchCard
-              image="../src/assets/padded-bag.jpg"
-              title="Dark Blue Padded Bag"
-              location="Student Union Cafeteria"
-              date="Found Nov 14 • 2:30 PM"
-              confidence="75% MATCH"
-            />
+        <section className="matches-summary">
+          <article>
+            <small>Total Matches</small>
+            <strong>12</strong>
+          </article>
+          <article>
+            <small>High Confidence</small>
+            <strong>5</strong>
+          </article>
+          <article>
+            <small>New Today</small>
+            <strong>3</strong>
+          </article>
+        </section>
 
-            <MatchCard
-              image="../src/assets/tech-bag.jpg"
-              title="Tech Backpack - Navy"
-              location="Bio-Tech Lab Corridor"
-              date="Found Nov 13 • 9:00 AM"
-              confidence="92% MATCH"
-              high
-            />
-          </div>
+        <section className="matches-filters">
+          <input type="text" placeholder="Search by keyword or location" />
+          <select defaultValue="all-zones">
+            <option value="all-zones">All Campus Zones</option>
+            <option value="library">Main Library</option>
+            <option value="student-union">Student Union</option>
+            <option value="science">Science Building</option>
+          </select>
+          <select defaultValue="7-days">
+            <option value="24-hours">Last 24 hours</option>
+            <option value="7-days">Last 7 days</option>
+            <option value="30-days">Last 30 days</option>
+          </select>
+          <button className="reset-filter-btn">Reset</button>
+        </section>
+
+        <div className="matches-results-head">
+          <h2>Recommended Results</h2>
+          <span>Sorted by confidence</span>
         </div>
+
+        <section className="matches-grid">
+          {matches.map((item) => (
+            <MatchCard key={item.title} {...item} />
+          ))}
+        </section>
       </main>
 
-      {/* Footer */}
       <footer className="footer">
-        <p>© 2023 Reclaima University Lost & Found</p>
+        <p>© 2026 Reclaima University Lost & Found</p>
       </footer>
     </div>
   );

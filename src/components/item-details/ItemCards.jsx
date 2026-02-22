@@ -10,10 +10,10 @@ export function DetailRow({ icon, label, value }) {
   );
 }
 
-export function MiniCard({ title }) {
+export function MiniCard({ title, imageSrc }) {
   return (
     <div className="mini-card">
-      <img src="https://via.placeholder.com/200" alt={title} />
+      <img src={imageSrc} alt={title} />
       <strong>{title}</strong>
       <small>Found recently</small>
     </div>

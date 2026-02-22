@@ -1,151 +1,139 @@
 import "../styles/ItemDetails.css";
+import NavBar from "../components/NavBar";
 import { DetailRow, MiniCard } from "../components/item-details/ItemCards";
 
 export default function ItemDetails() {
   return (
     <div className="item-page">
-      {/* NAV */}
-      <nav className="nav">
-        <div className="nav-left">
-          <div className="logo-icon">
-            <span className="material-icons">reorder</span>
-          </div>
-          <span className="logo-text">Reclaima</span>
-        </div>
+      <NavBar
+        icon="reorder"
+        links={[
+          { label: "Browse Lost Items", to: "/matches", active: true },
+          { label: "Report Found", to: "/found" },
+          { label: "My Claims", to: "/profile" },
+        ]}
+        rightContent={
+          <>
+            <button className="rc-navbar-icon-btn" aria-label="Notifications">
+              <span className="material-icons">notifications</span>
+            </button>
+            <div className="avatar">JD</div>
+          </>
+        }
+      />
 
-        <div className="nav-links">
-          <a href="#" className="active">
-            Browse Lost Items
-          </a>
-          <a href="#">Report Found</a>
-          <a href="#">My Claims</a>
-        </div>
-
-        <div className="nav-right">
-          <span className="material-icons icon-btn">notifications</span>
-          <div className="avatar">JD</div>
-        </div>
-      </nav>
-
-      <main className="container">
-        {/* Breadcrumb */}
-        <div className="breadcrumb">
-          <span>Home</span>
-          <span className="material-icons small">chevron_right</span>
+      <main className="item-shell">
+        <div className="item-breadcrumb">
+          <span>Matches</span>
+          <span className="material-icons">chevron_right</span>
           <span>Electronics</span>
-          <span className="material-icons small">chevron_right</span>
-          <strong>Apple MacBook Pro 14"</strong>
+          <span className="material-icons">chevron_right</span>
+          <strong>MacBook Pro 14"</strong>
         </div>
 
-        <div className="layout">
-          {/* LEFT */}
-          <div className="left">
-            <div className="image-card">
-              <img src="https://via.placeholder.com/800x600" alt="Laptop" />
-
-              <div className="privacy-overlay">
-                <span className="material-icons big">visibility_off</span>
-                <h3>Privacy Protection Active</h3>
-                <p>
-                  Sensitive details are blurred. Full images are released after
-                  ownership verification.
-                </p>
-                <button className="secondary-btn">View Safe Preview</button>
-              </div>
+        <section className="item-layout">
+          <div className="item-primary">
+            <div className="item-image-card">
+              <img src="/src/assets/tech-bag.jpg" alt="Laptop" />
+              <span className="privacy-badge">
+                <span className="material-icons">visibility_off</span>
+                Privacy Protected
+              </span>
             </div>
 
-            <div className="description-card">
-              <h2>Finder's Description</h2>
+            <div className="item-description-card">
+              <h2>Finder Description</h2>
               <p>
-                Found near the back row of the Main Library’s 3rd floor. It was
-                left plugged in. Stickers on the lid are blurred for security.
+                Found on the 3rd floor of the Main Library near study cubicles.
+                Device appears functional and was turned in without accessories.
               </p>
 
-              <div className="info-box">
+              <div className="tip-box">
                 <span className="material-icons">info</span>
-                <div>
-                  <strong>Security Tip</strong>
-                  <p>Only the real owner will know identifying marks.</p>
-                </div>
+                <p>
+                  Ownership is verified before release. Prepare unique details
+                  when making a claim.
+                </p>
               </div>
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="right">
-            <div className="details-card">
-              <span className="status">Available</span>
+          <aside className="item-side">
+            <div className="summary-card">
+              <span className="availability">Available</span>
               <h1>Apple MacBook Pro 14" (Silver)</h1>
 
               <DetailRow
                 icon="category"
                 label="Category"
-                value="Electronics & Computers"
+                value="Electronics and Computers"
               />
-
               <DetailRow
                 icon="location_on"
-                label="Location"
-                value="North Campus - Science Library"
+                label="Found At"
+                value="North Campus, Science Library"
               />
-
               <DetailRow
                 icon="calendar_today"
                 label="Date Found"
-                value="Thursday, Oct 24, 2024"
+                value="Oct 24, 2024"
               />
-
               <DetailRow
                 icon="handshake"
-                label="Handover"
+                label="Return Method"
                 value="Campus Security Office"
               />
             </div>
 
             <div className="action-card">
-              <button className="primary-btn">
+              <button className="btn-primary-action">
                 <span className="material-icons">task_alt</span>
-                Claim This Item
+                Start Claim
               </button>
-
-              <button className="outline-btn">
+              <button className="btn-secondary-action">
                 <span className="material-icons">forum</span>
                 Message Finder
               </button>
-
-              <p className="disclaimer">
-                Fraudulent claims may lead to disciplinary action.
+              <p className="action-note">
+                False claims may lead to account restrictions.
               </p>
             </div>
 
-            <div className="finder-card">
-              <div className="finder-left">
-                <span className="material-icons">person</span>
-                <div>
-                  <small>Reported by</small>
-                  <strong>Verified Student Finder</strong>
-                </div>
+            <div className="reporter-card">
+              <span className="material-icons">person</span>
+              <div>
+                <small>Reported by</small>
+                <strong>Verified Student Finder</strong>
               </div>
-              <div className="stars">⭐⭐⭐⭐⭐</div>
             </div>
-          </div>
-        </div>
+          </aside>
+        </section>
 
-        {/* Similar Items */}
-        <section className="similar-section">
-          <h3>Found Nearby</h3>
-
-          <div className="similar-grid">
-            <MiniCard title="Blue HydroFlask" />
-            <MiniCard title="Leather Wallet" />
-            <MiniCard title="Ray-Ban Sunglasses" />
-            <MiniCard title="Sony Headphones" />
+        <section className="nearby-section">
+          <h3>Similar Items Nearby</h3>
+          <div className="nearby-grid">
+            <MiniCard
+              title="Blue HydroFlask"
+              imageSrc="/src/assets/tech-bag.jpg"
+            />
+            <MiniCard
+              title="Leather Wallet"
+              imageSrc="/src/assets/padded-bag.jpg"
+            />
+            <MiniCard
+              title="Ray-Ban Sunglasses"
+              imageSrc="/src/assets/laptop-carrier.webp"
+            />
+            <MiniCard
+              title="Sony Headphones"
+              imageSrc="/src/assets/tech-bag.jpg"
+            />
           </div>
         </section>
       </main>
 
-      <footer className="footer">
-        © 2024 University Lost & Found Platform
+      <footer className="item-footer">
+        © 2026 University Lost and Found Platform
       </footer>
     </div>
   );

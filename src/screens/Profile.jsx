@@ -3,7 +3,6 @@ import {
   Content,
   ProfileFooter,
   ProfileNavbar,
-  Sidebar,
 } from "../components/profile/ProfileSections";
 
 export default function ProfileSettings() {
@@ -12,10 +11,7 @@ export default function ProfileSettings() {
       <ProfileNavbar />
 
       <main className="main">
-        <div className="layout">
-          <Sidebar />
-          <Content />
-        </div>
+        <Content />
       </main>
 
       <ProfileFooter />

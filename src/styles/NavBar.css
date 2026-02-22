@@ -1,0 +1,121 @@
+.rc-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  background: rgba(255, 255, 255, 0.82);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+
+.rc-navbar-fixed {
+  position: fixed;
+  width: 100%;
+}
+
+.rc-navbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rc-navbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.rc-navbar-logo-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-strong));
+  color: #06241e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-glow);
+}
+
+.rc-navbar-logo-text {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.rc-navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.rc-navbar-link {
+  text-decoration: none;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.rc-navbar-link:hover,
+.rc-navbar-link.is-active {
+  color: var(--color-primary-strong);
+}
+
+.rc-navbar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+}
+
+.rc-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.rc-navbar-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rc-navbar-cta {
+  text-decoration: none;
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  background: rgba(26, 166, 143, 0.15);
+  color: var(--color-primary-strong);
+  font-weight: 700;
+}
+
+.rc-navbar-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.rc-navbar-user img {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 2px solid rgba(26, 166, 143, 0.25);
+  object-fit: cover;
+}
+
+@media (max-width: 920px) {
+  .rc-navbar-links {
+    display: none;
+  }
+}

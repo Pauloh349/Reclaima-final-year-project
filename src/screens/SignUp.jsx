@@ -3,48 +3,58 @@ import "../styles/signup.css";
 
 const SignUp = () => {
   return (
-    <div className="signup-page">
-      <div className="auth-card">
-        <div className="auth-content">
-          <div className="auth-header">
-            <h1>Create your account</h1>
-            <p>Join your campus community and help return what's lost.</p>
+    <div className="auth-page">
+      <main className="auth-shell">
+        <div className="auth-brand">
+          <div className="brand-icon">
+            <span className="material-icons">find_replace</span>
           </div>
+          <span>Reclaima</span>
+        </div>
 
-          <form action="#" method="POST">
-            <div className="form-group">
-              <label htmlFor="university-email">University Email</label>
-              <div className="input-wrapper">
-                <span className="material-icons input-icon">school</span>
-                <input
-                  type="email"
-                  id="university-email"
-                  name="university-email"
-                  placeholder="name@university.edu"
-                  required
-                />
-              </div>
-              <p className="form-note">
-                Only verified .edu or university domains allowed.
-              </p>
+        <section className="auth-card">
+          <header className="auth-header">
+            <h1>Create account</h1>
+            <p>Start reporting and tracking items across your campus.</p>
+          </header>
+
+          <form className="auth-form" action="#" method="POST">
+            <label htmlFor="signup-email">University Email</label>
+            <div className="input-row">
+              <span className="material-icons input-icon">school</span>
+              <input
+                type="email"
+                id="signup-email"
+                name="signup-email"
+                placeholder="name@university.edu"
+                required
+              />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <div className="input-wrapper">
-                <span className="material-icons input-icon">lock</span>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  placeholder="Min. 8 characters"
-                  required
-                />
-                <button type="button" className="visibility-toggle">
-                  <span className="material-icons">visibility_off</span>
-                </button>
-              </div>
+            <label htmlFor="signup-password">Password</label>
+            <div className="input-row">
+              <span className="material-icons input-icon">lock</span>
+              <input
+                type="password"
+                id="signup-password"
+                name="signup-password"
+                placeholder="Create a secure password"
+                required
+              />
             </div>
+
+            <label className="consent-row" htmlFor="signup-consent">
+              <input
+                type="checkbox"
+                id="signup-consent"
+                name="signup-consent"
+                required
+              />
+              <span>
+                I agree to the <Link to="/terms">Terms of Service</Link> and{" "}
+                <Link to="/privacy">Privacy Policy</Link>.
+              </span>
+            </label>
 
             <button type="submit" className="btn-primary">
               Create Account
@@ -52,42 +62,22 @@ const SignUp = () => {
             </button>
           </form>
 
-          <div className="auth-footer">
+          <footer className="auth-footer">
             <p>
-              Already have an account? <Link to="/signin">Log in</Link>
+              Already have an account? <Link to="/signin">Sign in</Link>
             </p>
-          </div>
-        </div>
-      </div>
+          </footer>
+        </section>
 
-      <div className="illustrative-footer">
-        <div className="feature-card">
-          <div className="feature-icon">
-            <span className="material-icons">verified_user</span>
+        <footer className="page-footer">
+          <div className="footer-links">
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/terms">Terms of Service</Link>
+            <Link to="/help">Help Center</Link>
           </div>
-          <h3>Secure Login</h3>
-          <p>Your data is encrypted and kept within the campus.</p>
-        </div>
-        <div className="feature-card">
-          <div className="feature-icon">
-            <span className="material-icons">favorite</span>
-          </div>
-          <h3>Human Centered</h3>
-          <p>Designed for students, by students.</p>
-        </div>
-      </div>
-
-      <div className="decorative-bottom"></div>
-      <div className="decorative-top"></div>
-
-      <footer>
-        <p>© 2024 Reclaima University Platform. All rights reserved.</p>
-        <div className="footer-links">
-          <Link to="/privacy">Privacy Policy</Link>
-          <Link to="/terms">Terms of Service</Link>
-          <Link to="/help">Help Center</Link>
-        </div>
-      </footer>
+          <p>© 2026 Reclaima University Platform</p>
+        </footer>
+      </main>
     </div>
   );
 };

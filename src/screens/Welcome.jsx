@@ -1,53 +1,38 @@
 import { Link } from "react-router-dom";
+import NavBar from "../components/NavBar";
 import "../styles/welcome.css";
 
 function Welcome() {
   return (
     <div className="welcome-page">
-      <nav className="navbar">
-        <div className="container nav-inner">
-          <div className="logo">
-            <div className="logo-icon">
-              <span className="material-icons">find_replace</span>
-            </div>
-            <span className="logo-text">Reclaima</span>
-          </div>
+      <NavBar
+        fixed
+        icon="find_replace"
+        links={[
+          { label: "How it works", to: "/how-it-works" },
+          { kind: "divider" },
+          { label: "Sign In", to: "/signin", className: "signin" },
+          { label: "Sign Up", to: "/signup", className: "signin" },
+        ]}
+        rightContent={
+          <Link className="btn-primary small" to="/signup">
+            Get Started
+          </Link>
+        }
+      />
 
-          <div className="nav-links">
-            <a href="#">How it works</a>
-            <a href="#">Safety</a>
-            <a href="#">Campus Hub</a>
-            <span className="divider"></span>
-            <Link className="signin" to="/home">
-              Sign In
-            </Link>
-            <Link className="signin" to="/signup">
-              Sign Up
-            </Link>
-            <Link className="btn-primary small" to="/signup">
-              Get Started
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      <main className="hero">
-        <div className="container hero-grid">
-          <div className="hero-left">
-            <div className="badge">
-              <span className="dot"></span>
-              Now live at State University
-            </div>
-
+      <main className="welcome-main">
+        <section className="welcome-hero container">
+          <div className="hero-copy">
+            <span className="welcome-eyebrow">
+              Campus Lost and Found Platform
+            </span>
             <h1>
-              Reclaiming what's <span className="highlight">yours</span>,
-              together.
+              Welcome to <span className="accent-text">Reclaima</span>
             </h1>
-
             <p>
-              The dedicated lost and found platform for your university
-              community. Connect with fellow students and staff to return
-              valuables and find what you've lost, faster than ever.
+              The fastest way for your campus community to recover lost items
+              through clear reporting, smart matching, and safe handovers.
             </p>
 
             <div className="hero-actions">
@@ -55,38 +40,78 @@ function Welcome() {
                 Get Started
                 <span className="material-icons">arrow_forward</span>
               </Link>
+              <Link className="btn-secondary" to="/signin">
+                Sign In
+              </Link>
+              <Link className="btn-text" to="/how-it-works">
+                How it works
+                <span className="material-icons">play_circle</span>
+              </Link>
+            </div>
 
-              <div className="signin-box">
-                <span>Already a member?</span>
-                <Link to="/home">Sign in to your account</Link>
+            <div className="hero-meta">
+              <div>
+                <strong>10K+</strong>
+                <span>Campus users</span>
+              </div>
+              <div>
+                <strong>2.4K</strong>
+                <span>Items returned</span>
+              </div>
+              <div>
+                <strong>24h</strong>
+                <span>Average first match</span>
               </div>
             </div>
           </div>
 
-          <div className="hero-right">
-            <div className="image-wrapper">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDA_csNrwVW9RIv50QL_XeX0SkRylG4-fG49GnX6vU4s2SIwaLqAEX05Z7jQPN63GAKPy3T9cpfx3r7bomjcZ3SVxSx05oev4tz0TRtRUtjv8uMss_BFKEIFEGY2CtE4iKV_1HhR-nAav0kz1BSmthLAX4P9-N95OZ8LuBrXhwiI-rRiz95XRLIUD8Fll3Vq5-ZmW4vMFnF1j1OazE8cNuWh7tS9SIChbCdiFRhJcr9hqRSsryhU8-s_g1pZvna2AtYMzB5Ixh-vPSo"
-                alt="University campus"
-              />
-
-              <div className="card floating-1">
-                <strong>Item Found</strong>
-                <p>Blue Hydro Flask found at the Student Quad.</p>
-              </div>
-
-              <div className="card floating-2">
-                <strong>New Post</strong>
-                <p>Lost: Silver MacBook Air in Library Room 302.</p>
-              </div>
-            </div>
+          <div className="hero-panel">
+            <h2>How Reclaima helps</h2>
+            <ul>
+              <li>
+                <span className="material-icons">task_alt</span>
+                Guided lost and found reporting in minutes
+              </li>
+              <li>
+                <span className="material-icons">search</span>
+                Smart matching by location, date, and category
+              </li>
+              <li>
+                <span className="material-icons">verified_user</span>
+                Safer handovers through trusted campus points
+              </li>
+            </ul>
+            <Link to="/how-it-works" className="panel-link">
+              View full process
+              <span className="material-icons">arrow_forward</span>
+            </Link>
           </div>
-        </div>
+        </section>
+
+        <section className="welcome-process-wrap container">
+          <section className="welcome-process">
+            <article className="process-card">
+              <span className="step">01</span>
+              <h3>Report</h3>
+              <p>Post details in minutes with a guided workflow.</p>
+            </article>
+            <article className="process-card">
+              <span className="step">02</span>
+              <h3>Match</h3>
+              <p>Receive AI-ranked matches by confidence and location.</p>
+            </article>
+            <article className="process-card">
+              <span className="step">03</span>
+              <h3>Return</h3>
+              <p>Coordinate a secure handover and close the report.</p>
+            </article>
+          </section>
+        </section>
       </main>
 
-      <footer>
+      <footer className="welcome-footer">
         <div className="container footer-inner">
-          <span>© 2024 Reclaima Inc. Built for university communities.</span>
+          <span>© 2026 Reclaima Inc. Built for university communities.</span>
           <div className="footer-links">
             <Link to="/privacy">Privacy Policy</Link>
             <Link to="/terms">Terms of Service</Link>

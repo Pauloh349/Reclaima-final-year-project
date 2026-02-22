@@ -1,0 +1,121 @@
+.how-page {
+  min-height: 100vh;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-base);
+}
+
+.how-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+}
+
+.how-hero {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.how-eyebrow {
+  display: inline-flex;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.9rem;
+}
+
+.how-hero h1 {
+  font-size: clamp(2.1rem, 4vw, 3.1rem);
+  margin: 0 0 0.8rem;
+}
+
+.how-hero p {
+  max-width: 46rem;
+  margin: 0 auto;
+  color: var(--color-text-muted);
+  line-height: 1.7;
+}
+
+.how-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.2rem;
+}
+
+.how-step-card {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(230, 223, 214, 0.9);
+  border-radius: 16px;
+  padding: 1.4rem;
+  box-shadow: var(--shadow-card);
+  animation: fadeUp 0.6s ease both;
+}
+
+.how-step-card h2 {
+  font-size: 1.1rem;
+  margin: 0.9rem 0 0.55rem;
+}
+
+.how-step-card p {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.how-step-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.how-step-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 166, 143, 0.13);
+  color: var(--color-primary-strong);
+}
+
+.how-step-number {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.how-note {
+  margin-top: 2rem;
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: rgba(26, 166, 143, 0.12);
+  border: 1px solid rgba(26, 166, 143, 0.22);
+}
+
+.how-note p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.how-link-btn {
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.how-cta {
+  text-decoration: none;
+  background: linear-gradient(140deg, var(--color-primary), var(--color-primary-strong));
+  color: #07211c;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  font-weight: 700;
+  box-shadow: var(--shadow-glow);
+}
