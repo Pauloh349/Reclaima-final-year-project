@@ -170,9 +170,7 @@
 
 .map-body {
   min-height: 360px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0.75rem;
   background:
     linear-gradient(160deg, rgba(26, 166, 143, 0.06), rgba(243, 163, 91, 0.08)),
     repeating-linear-gradient(
@@ -184,18 +182,59 @@
     );
 }
 
-.map-placeholder {
-  text-align: center;
-  color: var(--color-text-muted);
+.map-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(230, 223, 214, 0.95);
+  box-shadow: 0 10px 24px rgba(6, 36, 30, 0.12);
 }
 
-.map-placeholder .material-icons {
-  font-size: 2rem;
-  color: var(--color-primary-strong);
+.campus-map-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  border: 0;
 }
 
-.map-placeholder p {
-  margin: 0.45rem 0 0;
+.map-overlay {
+  position: absolute;
+  top: 0.65rem;
+  left: 0.65rem;
+  right: 0.65rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.map-focus-tag {
+  background: rgba(6, 36, 30, 0.82);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.surrounding-chips {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.surrounding-chips span {
+  background: rgba(255, 255, 255, 0.88);
+  color: #13483d;
+  border-radius: 999px;
+  padding: 0.24rem 0.55rem;
+  font-size: 0.72rem;
+  border: 1px solid rgba(26, 166, 143, 0.25);
 }
 
 .map-meta {
@@ -217,6 +256,24 @@
   color: var(--color-text-muted);
   font-size: 0.82rem;
   line-height: 1.45;
+}
+
+.map-links {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.map-links a {
+  text-decoration: none;
+  border: 1px solid rgba(26, 166, 143, 0.35);
+  color: #0f5d4e;
+  background: rgba(26, 166, 143, 0.08);
+  padding: 0.3rem 0.58rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .zone-actions {
@@ -279,6 +336,24 @@
 
   .map-body {
     min-height: 250px;
+  }
+
+  .map-canvas {
+    min-height: 250px;
+  }
+
+  .campus-map-frame {
+    min-height: 250px;
+  }
+
+  .map-overlay {
+    gap: 0.4rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .surrounding-chips {
+    justify-content: flex-start;
   }
 }
 

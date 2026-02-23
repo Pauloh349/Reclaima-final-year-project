@@ -12,7 +12,7 @@ export function ProfileNavbar() {
       ]}
       rightContent={
         <Link className="rc-navbar-user" to="/profile">
-          <img src="https://via.placeholder.com/40" alt="User" />
+          <img src="../src/assets/user-icon.jpg" alt="User" />
           <span>Alex Chen</span>
         </Link>
       }
@@ -26,12 +26,12 @@ export function Content() {
       <section className="simple-card profile-head">
         <img
           className="profile-avatar"
-          src="https://via.placeholder.com/120"
+          src="../src/assets/user-icon.jpg"
           alt="Profile"
         />
         <div className="profile-main">
           <h1>Alex Chen</h1>
-          <p>alex.chen@university.edu</p>
+          <p>alex.1234567@student.egerton.ac.ke</p>
           <span className="simple-chip">Verified Student</span>
         </div>
         <button className="simple-btn primary">Edit</button>

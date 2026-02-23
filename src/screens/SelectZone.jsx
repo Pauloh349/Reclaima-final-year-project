@@ -85,20 +85,50 @@ const SelectZone = () => {
           <section className="map-panel">
             <div className="map-head">
               <h2>Campus Map</h2>
-              <span>Main Library selected</span>
+              <span>Egerton Main Campus + Nearby Landmarks</span>
             </div>
             <div className="map-body">
-              <div className="map-placeholder">
-                <span className="material-icons">map</span>
-                <p>Map preview will appear here</p>
+              <div className="map-canvas">
+                <iframe
+                  title="Egerton University Main Campus and Surroundings"
+                  src="https://www.google.com/maps?q=Egerton+University+Main+Campus+Njoro&z=13&output=embed"
+                  className="campus-map-frame"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+                <div className="map-overlay">
+                  <span className="map-focus-tag">Egerton Main Campus</span>
+                  <div className="surrounding-chips">
+                    <span>Njoro Town</span>
+                    <span>Nakuru City</span>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="map-meta">
               <span className="material-icons">info</span>
-              <p>
-                Tip: If unsure, choose the nearest zone where you last used the
-                item.
-              </p>
+              <div>
+                <p>
+                  Focused on Egerton University Main Campus with surrounding
+                  coverage for likely movement zones.
+                </p>
+                <div className="map-links">
+                  <a
+                    href="https://www.google.com/maps/dir/?api=1&destination=Egerton+University+Main+Campus+Njoro"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Get Directions
+                  </a>
+                  <a
+                    href="https://www.google.com/maps/search/?api=1&query=Egerton+University+Main+Campus+Njoro"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open Full Map
+                  </a>
+                </div>
+              </div>
             </div>
           </section>
         </section>
