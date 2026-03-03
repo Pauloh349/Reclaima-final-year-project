@@ -1,16 +1,37 @@
-# React + Vite
+# Reclaima
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Reclaima is a React + Vite frontend with a Node.js (Express) backend API.
 
-Currently, two official plugins are available:
+## Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- `src/`: frontend app
+- `server/src/`: backend API
 
-## React Compiler
+## Scripts
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `npm run dev`: run frontend and backend together
+- `npm run dev:frontend`: run only Vite frontend (`http://localhost:5173`)
+- `npm run dev:backend`: run only backend with nodemon (`http://localhost:4000`)
+- `npm run start:backend`: run backend in normal node mode
+- `npm run build`: production frontend build
+- `npm run lint`: lint frontend + backend files
 
-## Expanding the ESLint configuration
+## Backend API
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Base URL: `http://localhost:4000`
+
+- `GET /`: API welcome
+- `GET /api/health`: health check
+- `POST /api/auth/signup`: signup placeholder
+- `POST /api/auth/signin`: signin placeholder
+- `GET /api/items`: list in-memory items
+- `POST /api/items/lost`: create lost item
+- `POST /api/items/found`: create found item
+- `GET /api/matches`: smart matches placeholder
+
+## Environment
+
+Copy `.env.example` to `.env` and update values as needed:
+
+- `PORT=4000`
+- `CORS_ORIGIN=http://localhost:5173`
