@@ -1,10 +1,22 @@
 import "../styles/report-lost.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import NavBar from "../components/NavBar";
+import UserBadge from "../components/UserBadge";
+import { getUserDisplayName, useAuthUser } from "../hooks/useAuthUser";
+
+const DRAFT_KEY = "lostReportDraft";
 
 const ReportLost = () => {
+  const user = useAuthUser();
+  const displayName = getUserDisplayName(user);
+  const navigate = useNavigate();
   const categories = [
-    { icon: "badge", label: "ID or Badge", hint: "Student, staff, access cards" },
+    {
+      icon: "badge",
+      label: "ID or Badge",
+      hint: "Student, staff, access cards",
+    },
     { icon: "smartphone", label: "Phone", hint: "Smartphones and accessories" },
     {
       icon: "account_balance_wallet",
@@ -15,6 +27,30 @@ const ReportLost = () => {
     { icon: "laptop_mac", label: "Laptop", hint: "Laptops and tablets" },
     { icon: "more_horiz", label: "Other", hint: "Anything not listed above" },
   ];
+
+  const [selectedCategory, setSelectedCategory] = useState(
+    categories[0]?.label || "",
+  );
+  const [statusMessage, setStatusMessage] = useState("");
+
+  const persistDraft = () => {
+    const draft = {
+      category: selectedCategory,
+      contactName: displayName,
+      contactEmail: user?.email || "",
+    };
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  };
+
+  const handleContinue = () => {
+    persistDraft();
+    navigate("/lost/zone");
+  };
+
+  const handleSaveDraft = () => {
+    persistDraft();
+    setStatusMessage("Draft saved. You can complete it later.");
+  };
 
   return (
     <div className="post-lost-page">
@@ -31,21 +67,14 @@ const ReportLost = () => {
             <button className="rc-navbar-icon-btn" aria-label="Notifications">
               <span className="material-icons">notifications_none</span>
             </button>
-            <Link className="rc-navbar-user" to="/profile">
-              <img
-                className="user-img"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVnnIZidPG0NxJvltEEQIIuFqM-14w9vVJ6oM9NYpx7EAyvqxO1Z_HamEGZM6J2VG20mdcUfkv_Y9ze_5bwOlxpqBOTwHy5Rbv6Z_Aw6jHV6CJqPGN0OMG8JWR8XuiPSgNGn0QeGXiMChtz9i3tw8i2MRAyaPC7CMM7wgQQoTimHxz1PIQ9qAvngQYknDeXTIwqdjv5BT8LW2HLGyq_2tN_0EjgIMKr6GM1Yx1wubtD8S3yHL5EAkzzVmTvozD0_MQP1Pdh__g4Rgs"
-                alt="User Avatar"
-              />
-              <span>Alex Rivera</span>
-            </Link>
+            <UserBadge />
           </>
         }
       />
 
       <main className="lost-shell">
         <section className="lost-head">
-          <span className="step-chip">Step 1 of 4</span>
+          <span className="step-chip">Step 1 of 2</span>
           <h1>What did you lose?</h1>
           <p>
             Select the item type to start your report. This helps us match your
@@ -54,22 +83,23 @@ const ReportLost = () => {
         </section>
 
         <section className="progress-panel">
-          <div className="progress-labels">
+          <div className="progress-labels two-step">
             <span>Category</span>
-            <span>Details</span>
-            <span>Location</span>
-            <span>Review</span>
+            <span>Details & Submit</span>
           </div>
           <div className="progress-track">
-            <div className="progress-fill" />
+            <div className="progress-fill" style={{ width: "50%" }} />
           </div>
         </section>
 
         <section className="category-grid">
-          {categories.map((category, index) => (
+          {categories.map((category) => (
             <button
               key={category.label}
-              className={`category-card ${index === 0 ? "active" : ""}`}
+              className={`category-card ${
+                selectedCategory === category.label ? "active" : ""
+              }`}
+              onClick={() => setSelectedCategory(category.label)}
             >
               <div className="category-icon">
                 <span className="material-icons">{category.icon}</span>
@@ -85,10 +115,12 @@ const ReportLost = () => {
         <section className="info-note">
           <span className="material-icons">info</span>
           <p>
-            Add specific details in the next step, such as color, brand, and
-            identifying marks.
+            Selected: <strong>{selectedCategory}</strong>. Add specific details
+            in the next step, such as color, brand, and identifying marks.
           </p>
         </section>
+
+        {statusMessage && <p className="lost-alert success">{statusMessage}</p>}
 
         <div className="action-bar">
           <Link to="/home" className="btn-ghost">
@@ -97,11 +129,13 @@ const ReportLost = () => {
           </Link>
 
           <div className="action-right">
-            <button className="btn-ghost">Save Draft</button>
-            <Link to="/lost/zone" className="btn-primary">
+            <button className="btn-ghost" onClick={handleSaveDraft}>
+              Save Draft
+            </button>
+            <button className="btn-primary" onClick={handleContinue}>
               Continue
               <span className="material-icons">arrow_forward</span>
-            </Link>
+            </button>
           </div>
         </div>
       </main>

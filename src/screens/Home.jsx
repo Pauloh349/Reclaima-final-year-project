@@ -1,31 +1,26 @@
+import { useMemo } from "react";
 import "../styles/home.css";
 import { Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import UserBadge from "../components/UserBadge";
+import { getUserDisplayName, useAuthUser } from "../hooks/useAuthUser";
 
 const Home = () => {
+  const user = useAuthUser();
+
+  const displayName = useMemo(() => getUserDisplayName(user), [user]);
+
   return (
     <div className="home-page">
       <NavBar
         icon="location_searching"
-        links={[
-          { label: "Dashboard", to: "/home", active: true },
-          { label: "Report Lost", to: "/lost" },
-          { label: "Report Found", to: "/found" },
-          { label: "Smart Matches", to: "/matches" },
-        ]}
+        links={[]}
         rightContent={
           <>
             <button className="rc-navbar-icon-btn" aria-label="Notifications">
               <span className="material-icons">notifications</span>
             </button>
-            <Link className="rc-navbar-user" to="/profile">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-a4k-dzglr3WR5xOMK6lpSWTCp2cum41llRNSt_XpifFfqGpXcCh5EpqdAkZUHfeYrKWHRPeHCmW5TFCBIRM9T9zvvJqVydGPOdxSSjfjj1qdvI4RT6XR6DkcxS7mfTShf2LR1kfnCNCvjSK3-CyLptvg1roEw5V5ORXfKXaGu4dLI41oWrUkba2SYToworuTgrE1IidJPnW3qy7Bj3nIzLquvr-9nbnXeFY2Ps-rAUKoS9StOkheJEwpiiNLqWD0NBcjwHEkTYUy"
-                alt="User Profile"
-              />
-              <span className="user-name">Alex Rivera</span>
-              <span className="material-icons">expand_more</span>
-            </Link>
+            <UserBadge showChevron />
           </>
         }
       />
@@ -34,7 +29,7 @@ const Home = () => {
         <section className="home-hero">
           <div>
             <span className="eyebrow">Dashboard</span>
-            <h1>Welcome back, Alex</h1>
+            <h1>Welcome back, {displayName}</h1>
             <p>
               Track reports, review smart matches, and quickly post new lost or
               found items.
@@ -82,9 +77,7 @@ const Home = () => {
               <span className="material-icons">inventory_2</span>
               <h2>Report Found Item</h2>
             </div>
-            <p>
-              Log found property and let Reclaima suggest likely owners.
-            </p>
+            <p>Log found property and let Reclaima suggest likely owners.</p>
             <div className="card-link">
               Start report
               <span className="material-icons">arrow_forward</span>
@@ -93,7 +86,6 @@ const Home = () => {
         </section>
 
         <section className="quick-links">
-          <Link to="/lost/zone">Campus zones</Link>
           <Link to="/profile">Profile settings</Link>
           <Link to="/how-it-works">How it works</Link>
           <Link to="/help">Support</Link>

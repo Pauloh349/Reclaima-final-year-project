@@ -1,7 +1,109 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/SignIn.css";
+import { notifyAuthUserChanged } from "../hooks/useAuthUser";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const SignIn = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [feedback, setFeedback] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormData((current) => ({
+      ...current,
+      [name]: value,
+    }));
+
+    setErrors((current) => {
+      if (!current[name]) {
+        return current;
+      }
+
+      const nextErrors = { ...current };
+      delete nextErrors[name];
+      return nextErrors;
+    });
+  };
+
+  const validateForm = () => {
+    const validationErrors = {};
+    const email = formData.email.trim().toLowerCase();
+
+    if (!email) {
+      validationErrors.email = "Email is required.";
+    } else if (!EMAIL_REGEX.test(email)) {
+      validationErrors.email = "Enter a valid email address.";
+    }
+
+    if (!formData.password) {
+      validationErrors.password = "Password is required.";
+    } else if (formData.password.length < 8) {
+      validationErrors.password = "Password must be at least 8 characters.";
+    }
+
+    return validationErrors;
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setFeedback("");
+
+    const validationErrors = validateForm();
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setErrors({});
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setErrors(payload.errors || {});
+        setFeedback(payload.message || "Signin failed. Please try again.");
+        return;
+      }
+
+      if (payload.token) {
+        localStorage.setItem("authToken", payload.token);
+      }
+
+      if (payload.user) {
+        localStorage.setItem("authUser", JSON.stringify(payload.user));
+      }
+
+      setFeedback(payload.message || "Signed in successfully.");
+      navigate("/home");
+    } catch {
+      setFeedback("Could not connect to server. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="auth-page">
       <main className="auth-shell">
@@ -18,18 +120,21 @@ const SignIn = () => {
             <p>Access your reports, matches, and messages.</p>
           </header>
 
-          <form className="auth-form" action="#" method="POST">
+          <form className="auth-form" onSubmit={handleSubmit} noValidate>
             <label htmlFor="signin-email">University Email</label>
             <div className="input-row">
               <span className="material-icons input-icon">school</span>
               <input
                 type="email"
                 id="signin-email"
-                name="signin-email"
+                name="email"
                 placeholder="name@university.edu"
-                required
+                value={formData.email}
+                onChange={handleInputChange}
+                className={errors.email ? "input-error" : ""}
               />
             </div>
+            {errors.email ? <p className="field-error">{errors.email}</p> : null}
 
             <label htmlFor="signin-password">Password</label>
             <div className="input-row">
@@ -37,14 +142,19 @@ const SignIn = () => {
               <input
                 type="password"
                 id="signin-password"
-                name="signin-password"
+                name="password"
                 placeholder="Enter your password"
-                required
+                value={formData.password}
+                onChange={handleInputChange}
+                className={errors.password ? "input-error" : ""}
               />
             </div>
+            {errors.password ? <p className="field-error">{errors.password}</p> : null}
 
-            <button type="submit" className="btn-primary">
-              Continue
+            {feedback ? <p className="form-feedback">{feedback}</p> : null}
+
+            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? "Signing in..." : "Continue"}
               <span className="material-icons">arrow_forward</span>
             </button>
           </form>
@@ -70,3 +180,5 @@ const SignIn = () => {
 };
 
 export default SignIn;
+
+

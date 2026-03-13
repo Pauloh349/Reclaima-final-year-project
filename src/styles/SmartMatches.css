@@ -103,6 +103,11 @@
   color: var(--color-text-muted);
 }
 
+.matches-muted {
+  margin-top: 1rem;
+  color: var(--color-text-muted);
+}
+
 .matches-grid {
   margin-top: 0.85rem;
   display: grid;
@@ -237,4 +242,9 @@
     gap: 0.3rem;
     align-items: flex-start;
   }
+}
+
+.match-image img.is-placeholder {
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.85);
 }

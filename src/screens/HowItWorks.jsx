@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import UserBadge from "../components/UserBadge";
 import "../styles/HowItWorks.css";
 
 const steps = [
@@ -88,3 +89,4 @@ export default function HowItWorks() {
     </div>
   );
 }
+

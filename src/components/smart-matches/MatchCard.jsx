@@ -1,4 +1,6 @@
-export default function MatchCard({
+import placeholderImage from "../../assets/default-image.png";
+
+function MatchCard({
   image,
   title,
   category,
@@ -6,13 +8,16 @@ export default function MatchCard({
   date,
   confidence = 0,
   status,
+  onMessageFinder,
 }) {
   const confidenceClass = confidence >= 90 ? "high" : "medium";
+  const imageSrc = image || placeholderImage;
+  const imageClass = image ? "" : "is-placeholder";
 
   return (
     <article className="match-card">
       <div className="match-image">
-        <img src={image} alt={title} />
+        <img src={imageSrc} alt={title} className={imageClass} />
         <span className={`confidence-pill ${confidenceClass}`}>
           {confidence}% Match
         </span>
@@ -36,9 +41,14 @@ export default function MatchCard({
 
         <div className="match-actions">
           <button className="match-btn solid">View Item</button>
-          <button className="match-btn">Message Finder</button>
+          <button className="match-btn" onClick={onMessageFinder}>
+            Message Finder
+          </button>
         </div>
       </div>
     </article>
   );
 }
+
+export default MatchCard;
+export { MatchCard };

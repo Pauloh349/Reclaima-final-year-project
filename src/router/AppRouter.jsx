@@ -15,6 +15,7 @@ import PrivacyPolicy from "../screens/PrivacyPolicy";
 import TermsOfService from "../screens/TermsOfService";
 import HelpCenter from "../screens/HelpCenter";
 import HowItWorks from "../screens/HowItWorks";
+import AdminDashboard from "../screens/AdminDashboard";
 
 const AppRouter = () => {
   return (
@@ -35,6 +36,7 @@ const AppRouter = () => {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/help" element={<HelpCenter />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
+        <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
     </BrowserRouter>
   );

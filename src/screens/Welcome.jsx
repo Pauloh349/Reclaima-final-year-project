@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import UserBadge from "../components/UserBadge";
 import "../styles/welcome.css";
 
 function Welcome() {
@@ -15,9 +16,12 @@ function Welcome() {
           { label: "Sign Up", to: "/signup", className: "signin" },
         ]}
         rightContent={
-          <Link className="btn-primary small" to="/signup">
-            Get Started
-          </Link>
+          <>
+            <UserBadge />
+            <Link className="btn-primary small" to="/signup">
+              Get Started
+            </Link>
+          </>
         }
       />
 
@@ -124,3 +128,4 @@ function Welcome() {
 }
 
 export default Welcome;
+

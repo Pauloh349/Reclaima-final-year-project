@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import UserBadge from "../components/UserBadge";
 import "../styles/Legal.css";
 
 const TermsOfService = () => {
@@ -12,9 +13,12 @@ const TermsOfService = () => {
           { label: "Sign In", to: "/signin" },
         ]}
         rightContent={
-          <Link to="/signup" className="rc-navbar-cta">
-            Create Account
-          </Link>
+          <>
+            <UserBadge />
+            <Link to="/signup" className="rc-navbar-cta">
+              Create Account
+            </Link>
+          </>
         }
       />
 
@@ -77,3 +81,4 @@ const TermsOfService = () => {
 };
 
 export default TermsOfService;
+

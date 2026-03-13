@@ -1,40 +1,79 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/SmartMatches.css";
 import MatchCard from "../components/smart-matches/MatchCard";
 import NavBar from "../components/NavBar";
-import laptopCarrier from "../assets/laptop-carrier.webp";
-import paddedBag from "../assets/padded-bag.jpg";
-import techBag from "../assets/tech-bag.jpg";
+import UserBadge from "../components/UserBadge";
+import { useAuthUser } from "../hooks/useAuthUser";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+
+async function fetchMatches(email) {
+  const response = await fetch(
+    `${API_BASE}/api/items/matches?email=${encodeURIComponent(email)}`,
+  );
+  if (!response.ok) {
+    throw new Error("Request failed");
+  }
+  return response.json();
+}
 
 export default function SmartMatches() {
-  const matches = [
-    {
-      image: laptopCarrier,
-      title: "Blue Laptop Carrier",
-      category: "Bags and Carriers",
-      location: "Engineering Library, Floor 2",
-      date: "Feb 18, 2026 • 10:15 AM",
-      confidence: 98,
-      status: "High confidence",
-    },
-    {
-      image: paddedBag,
-      title: "Dark Blue Padded Bag",
-      category: "Bags and Carriers",
-      location: "Student Union Cafeteria",
-      date: "Feb 18, 2026 • 2:30 PM",
-      confidence: 75,
-      status: "Review suggested",
-    },
-    {
-      image: techBag,
-      title: "Tech Backpack, Navy",
-      category: "Backpacks",
-      location: "Bio-Tech Lab Corridor",
-      date: "Feb 17, 2026 • 9:00 AM",
-      confidence: 92,
-      status: "High confidence",
-    },
-  ];
+  const user = useAuthUser();
+  const navigate = useNavigate();
+  const [matches, setMatches] = useState([]);
+  const [lostCount, setLostCount] = useState(0);
+  const [foundCount, setFoundCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const handleMessageFinder = (item) => {
+    const chatId = item?._id || item?.matchSource?.id || "new";
+    navigate(`/chat/${chatId}`, { state: { item } });
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const email = (user?.email || "").trim();
+
+    if (!email) {
+      setMatches([]);
+      setLostCount(0);
+      setFoundCount(0);
+      setLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    setLoading(true);
+    setError("");
+
+    fetchMatches(email)
+      .then((data) => {
+        if (!mounted) return;
+        setMatches(data.matches || []);
+        setLostCount(data.lostCount || 0);
+        setFoundCount(data.foundCount || 0);
+      })
+      .catch(() => {
+        if (mounted) setError("Unable to load matches right now.");
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [user?.email]);
+
+  const headerText = useMemo(() => {
+    if (matches.length) {
+      return `${matches.length} possible match${matches.length === 1 ? "" : "es"} for your reported items`;
+    }
+    return "We will show matches once your lost item reports align with found items.";
+  }, [matches.length]);
 
   return (
     <div className="smart-matches-page">
@@ -50,9 +89,7 @@ export default function SmartMatches() {
             <button className="rc-navbar-icon-btn" aria-label="Notifications">
               <span className="material-icons">notifications</span>
             </button>
-            <div className="avatar">
-              <img src="https://via.placeholder.com/100" alt="profile" />
-            </div>
+            <UserBadge />
           </>
         }
       />
@@ -60,52 +97,60 @@ export default function SmartMatches() {
       <main className="matches-shell">
         <header className="matches-header">
           <h1>Smart Matches</h1>
-          <p>
-            12 possible matches for <strong>Blue Laptop Bag</strong>
-          </p>
+          <p>{headerText}</p>
         </header>
 
         <section className="matches-summary">
           <article>
             <small>Total Matches</small>
-            <strong>12</strong>
+            <strong>{matches.length}</strong>
           </article>
           <article>
-            <small>High Confidence</small>
-            <strong>5</strong>
+            <small>Lost Reports</small>
+            <strong>{lostCount}</strong>
           </article>
           <article>
-            <small>New Today</small>
-            <strong>3</strong>
+            <small>Found Candidates</small>
+            <strong>{foundCount}</strong>
           </article>
-        </section>
-
-        <section className="matches-filters">
-          <input type="text" placeholder="Search by keyword or location" />
-          <select defaultValue="all-zones">
-            <option value="all-zones">All Campus Zones</option>
-            <option value="library">Main Library</option>
-            <option value="student-union">Student Union</option>
-            <option value="science">Science Building</option>
-          </select>
-          <select defaultValue="7-days">
-            <option value="24-hours">Last 24 hours</option>
-            <option value="7-days">Last 7 days</option>
-            <option value="30-days">Last 30 days</option>
-          </select>
-          <button className="reset-filter-btn">Reset</button>
         </section>
 
         <div className="matches-results-head">
           <h2>Recommended Results</h2>
-          <span>Sorted by confidence</span>
+          <span>Sorted by newest reports</span>
         </div>
 
-        <section className="matches-grid">
-          {matches.map((item) => (
-            <MatchCard key={item.title} {...item} />
-          ))}
-        </section>
+        {loading ? (
+          <p className="matches-muted">Loading matches...</p>
+        ) : error ? (
+          <p className="matches-muted">{error}</p>
+        ) : matches.length === 0 ? (
+          <p className="matches-muted">No matches yet.</p>
+        ) : (
+          <section className="matches-grid">
+            {matches.map((item) => (
+              <MatchCard
+                key={item._id || `${item.title}-${item.createdAt}`}
+                image={item.photoUrl}
+                title={item.title || "Untitled report"}
+                category={item.category || "General"}
+                location={item.location || item.zone || "No location"}
+                date={
+                  item.createdAt
+                    ? new Date(item.createdAt).toLocaleDateString()
+                    : ""
+                }
+                confidence={95}
+                status={
+                  item.matchSource?.title
+                    ? `Matched to ${item.matchSource.title}`
+                    : "Potential match"
+                }
+                onMessageFinder={() => handleMessageFinder(item)}
+              />
+            ))}
+          </section>
+        )}
       </main>
 
       <footer className="footer">

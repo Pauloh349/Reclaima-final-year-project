@@ -75,6 +75,10 @@
   color: var(--color-text-muted);
 }
 
+.progress-labels.single-step {
+  grid-template-columns: 1fr;
+}
+
 .progress-labels .active {
   color: var(--color-primary-strong);
 }
@@ -247,6 +251,11 @@
   color: #06241e;
 }
 
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .found-footer {
   text-align: center;
   padding: 1.4rem;
@@ -254,6 +263,77 @@
   color: var(--color-text-muted);
   font-size: 0.82rem;
   background: rgba(255, 255, 255, 0.55);
+}
+
+.found-form {
+  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(230, 223, 214, 0.9);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.found-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.found-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.found-form-grid input,
+.found-form-grid textarea,
+.found-form-grid select {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.found-form-grid .is-invalid {
+  border-color: rgba(215, 67, 67, 0.6);
+  box-shadow: 0 0 0 2px rgba(215, 67, 67, 0.12);
+}
+
+.found-form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.field-required {
+  color: #c74444;
+  font-weight: 700;
+}
+
+.found-alert {
+  margin: 0.9rem 0 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+}
+
+.found-alert.error {
+  background: rgba(215, 67, 67, 0.12);
+  color: #9d1d1d;
+  border: 1px solid rgba(215, 67, 67, 0.22);
+}
+
+.found-alert.success {
+  background: rgba(26, 166, 143, 0.12);
+  color: #0f5d4e;
+  border: 1px solid rgba(26, 166, 143, 0.25);
+}
+
+.found-alert.hint {
+  background: rgba(6, 36, 30, 0.06);
+  color: var(--color-text-muted);
+  border: 1px dashed rgba(6, 36, 30, 0.2);
 }
 
 @media (max-width: 760px) {
@@ -274,5 +354,9 @@
   .action-right {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .found-form-grid {
+    grid-template-columns: 1fr;
   }
 }

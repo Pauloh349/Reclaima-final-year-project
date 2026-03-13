@@ -1,5 +1,6 @@
 import "../styles/ItemDetails.css";
 import NavBar from "../components/NavBar";
+import UserBadge from "../components/UserBadge";
 import { DetailRow, MiniCard } from "../components/item-details/ItemCards";
 
 export default function ItemDetails() {
@@ -17,7 +18,7 @@ export default function ItemDetails() {
             <button className="rc-navbar-icon-btn" aria-label="Notifications">
               <span className="material-icons">notifications</span>
             </button>
-            <div className="avatar">JD</div>
+            <UserBadge />
           </>
         }
       />
@@ -138,3 +139,6 @@ export default function ItemDetails() {
     </div>
   );
 }
+
+
+

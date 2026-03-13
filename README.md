@@ -6,6 +6,7 @@ Reclaima is a React + Vite frontend with a Node.js (Express) backend API.
 
 - `src/`: frontend app
 - `server/src/`: backend API
+- `server/src/db/client.js`: shared MongoDB client and connection lifecycle
 
 ## Scripts
 
@@ -35,3 +36,5 @@ Copy `.env.example` to `.env` and update values as needed:
 
 - `PORT=4000`
 - `CORS_ORIGIN=http://localhost:5173`
+- `MONGODB_URI=<your-mongodb-connection-string>`
+- `MONGODB_DB_NAME=reclaima`

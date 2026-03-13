@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import UserBadge from "../components/UserBadge";
 import "../styles/HelpCenter.css";
 
 const HelpCenter = () => {
@@ -12,9 +13,12 @@ const HelpCenter = () => {
           { label: "Sign In", to: "/signin" },
         ]}
         rightContent={
-          <Link to="/signup" className="rc-navbar-cta">
-            Create Account
-          </Link>
+          <>
+            <UserBadge />
+            <Link to="/signup" className="rc-navbar-cta">
+              Create Account
+            </Link>
+          </>
         }
       />
 
@@ -104,3 +108,4 @@ const HelpCenter = () => {
 };
 
 export default HelpCenter;
+
