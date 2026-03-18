@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit";
 import { Router } from "express";
+import { ObjectId } from "mongodb";
 
 import { getDatabase } from "../db/client.js";
 
@@ -7,10 +8,67 @@ const adminRouter = Router();
 const USERS_COLLECTION = "users";
 const ITEMS_COLLECTION = "items";
 
+async function requireAdmin(req, res, next) {
+  try {
+    const authHeader = String(req.headers.authorization || "");
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7).trim()
+      : "";
+
+    if (!token) {
+      return res.status(401).json({
+        message: "Authentication required.",
+      });
+    }
+
+    const db = getDatabase();
+    const usersCollection = db.collection(USERS_COLLECTION);
+    const adminUser = await usersCollection.findOne({ authToken: token });
+
+    if (!adminUser) {
+      return res.status(401).json({
+        message: "Invalid or expired session.",
+      });
+    }
+
+    const isAdmin = adminUser.role === "admin";
+
+    if (!isAdmin) {
+      return res.status(403).json({
+        message: "Admin access required.",
+      });
+    }
+
+    req.adminUser = {
+      id: adminUser._id,
+      email: adminUser.email,
+    };
+
+    return next();
+  } catch (error) {
+    console.error("Admin auth error:", error);
+    return res.status(500).json({
+      message: "Unable to verify admin access right now.",
+    });
+  }
+}
+
+adminRouter.use(requireAdmin);
+
 function clampDays(value, fallback = 30) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.min(Math.max(Math.floor(parsed), 1), 365);
+}
+
+function clampLimit(value, fallback = 25) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(Math.max(Math.floor(parsed), 1), 100);
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function isoDateDaysAgo(days) {
@@ -79,60 +137,132 @@ function sendCsv(res, filename, rows, headers) {
 
 function drawLogo(doc, x, y) {
   doc.save();
-  doc.circle(x + 12, y + 12, 12).fill("#1aa68f");
+  doc.circle(x + 14, y + 14, 14).fill("#1aa68f");
   doc.fillColor("#ffffff").fontSize(12).font("Helvetica-Bold");
-  doc.text("R", x + 8.2, y + 5.8, { width: 20, align: "center" });
+  doc.text("R", x + 9.2, y + 7.6, { width: 20, align: "center" });
   doc.restore();
 }
 
-function drawHeader(doc, title, metaLines = []) {
-  const { left, top, right } = doc.page.margins;
-  const headerY = top - 8;
+function drawFooter(doc) {
+  const { left, right, bottom } = doc.page.margins;
+  const footerY = doc.page.height - bottom + 16;
+  const contentWidth = doc.page.width - left - right;
+  const pageNumber = doc.page.number || 1;
 
-  drawLogo(doc, left, headerY + 6);
+  doc.save();
+  doc
+    .strokeColor("#e6dfd6")
+    .lineWidth(1)
+    .moveTo(left, footerY - 8)
+    .lineTo(doc.page.width - right, footerY - 8)
+    .stroke();
 
-  doc.fillColor("#0f1d18").font("Helvetica-Bold").fontSize(20);
-  doc.text("Reclaima", left + 34, headerY + 2);
-  doc.fontSize(12).font("Helvetica").fillColor("#6c7b73");
-  doc.text("Admin Report", left + 34, headerY + 26);
-
-  doc.fontSize(18).font("Helvetica-Bold").fillColor("#1d2b26");
-  doc.text(title, left, headerY + 56);
-
-  doc.fontSize(10).font("Helvetica").fillColor("#51605a");
-  let metaY = headerY + 80;
-  metaLines.forEach((line) => {
-    doc.text(line, left, metaY, { width: doc.page.width - left - right });
-    metaY += 14;
+  doc.fillColor("#8a9891").font("Helvetica").fontSize(8);
+  doc.text("Reclaima Admin Report", left, footerY, {
+    width: contentWidth,
+    align: "left",
   });
+  doc.text(`Page ${pageNumber}`, left, footerY, {
+    width: contentWidth,
+    align: "right",
+  });
+  doc.restore();
+}
 
-  doc.moveTo(left, metaY + 6)
-    .lineTo(doc.page.width - right, metaY + 6)
+function drawHeader(doc, title, metaLines = [], options = {}) {
+  const { left, top, right } = doc.page.margins;
+  const compact = Boolean(options.compact);
+  const pageWidth = doc.page.width;
+  const headerHeight = compact ? 58 : 86;
+  const contentWidth = pageWidth - left - right;
+  const generatedLine = metaLines.find((line) =>
+    String(line).toLowerCase().startsWith("generated:"),
+  );
+
+  doc.save();
+  doc.rect(0, 0, pageWidth, headerHeight).fill("#0f1d18");
+  doc.rect(0, headerHeight - 4, pageWidth, 4).fill("#1aa68f");
+
+  drawLogo(doc, left, 12);
+
+  doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(18);
+  doc.text("Reclaima", left + 38, 18);
+
+  doc.fillColor("#d7e2de").font("Helvetica").fontSize(10);
+  doc.text("Admin Report", left + 38, 40);
+
+  if (generatedLine) {
+    doc.fillColor("#d7e2de").font("Helvetica").fontSize(9);
+    doc.text(String(generatedLine), left, 22, {
+      width: contentWidth,
+      align: "right",
+    });
+  }
+  doc.restore();
+
+  let cursorY = headerHeight + 18;
+
+  doc.fillColor("#1d2b26").font("Helvetica-Bold").fontSize(compact ? 14 : 18);
+  doc.text(title, left, cursorY);
+  cursorY += compact ? 18 : 24;
+
+  if (!compact && metaLines.length) {
+    const metaBoxY = cursorY + 2;
+    const rows = Math.ceil(metaLines.length / 2);
+    const metaBoxHeight = rows * 14 + 18;
+
+    doc.save();
+    doc.roundedRect(left, metaBoxY, contentWidth, metaBoxHeight, 8).fill("#f6f3ec");
+    doc.restore();
+
+    doc.fillColor("#51605a").font("Helvetica").fontSize(9);
+    const colWidth = (contentWidth - 24) / 2;
+
+    metaLines.forEach((line, index) => {
+      const column = index % 2;
+      const row = Math.floor(index / 2);
+      const x = left + 12 + column * colWidth;
+      const y = metaBoxY + 10 + row * 14;
+      doc.text(String(line), x, y, { width: colWidth - 8 });
+    });
+
+    cursorY = metaBoxY + metaBoxHeight + 10;
+  }
+
+  doc
+    .moveTo(left, cursorY)
+    .lineTo(pageWidth - right, cursorY)
     .lineWidth(1)
     .strokeColor("#e6dfd6")
     .stroke();
 
-  return metaY + 16;
+  return cursorY + 12;
 }
 
-function drawTable(doc, startY, columns, rows) {
+function drawTable(doc, startY, columns, rows, options = {}) {
   const { left, right, bottom } = doc.page.margins;
   const pageWidth = doc.page.width - left - right;
-  const rowHeight = 18;
-  const headerHeight = 22;
-  const maxY = doc.page.height - bottom;
+  const rowHeight = 22;
+  const headerHeight = 24;
+  const footerSpace = 28;
+  const maxY = doc.page.height - bottom - footerSpace;
+  const title = options.title || "";
+  const metaLines = options.metaLines || [];
 
   const columnWidths = columns.map((col) => Math.floor(pageWidth * col.width));
 
   function drawHeaderRow(y) {
-    doc.rect(left, y, pageWidth, headerHeight).fill("#f2efe6");
-    doc.fillColor("#0f1d18").font("Helvetica-Bold").fontSize(10);
+    doc.rect(left, y, pageWidth, headerHeight).fill("#1d2b26");
+    doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(10);
 
-    let x = left + 6;
+    let x = left + 8;
     columns.forEach((col, index) => {
-      doc.text(col.label, x, y + 6, {
-        width: columnWidths[index] - 8,
+      doc.text(col.label, x, y + 7, {
+        width: columnWidths[index] - 12,
+        height: headerHeight - 10,
         align: "left",
+        lineBreak: false,
+        ellipsis: true,
       });
       x += columnWidths[index];
     });
@@ -140,35 +270,67 @@ function drawTable(doc, startY, columns, rows) {
     return y + headerHeight;
   }
 
-  let currentY = drawHeaderRow(startY);
-  doc.font("Helvetica").fontSize(9).fillColor("#1d2b26");
+  if (!rows.length) {
+    drawHeaderRow(startY);
+    drawFooter(doc);
+    return startY + headerHeight;
+  }
 
-  rows.forEach((row, rowIndex) => {
-    if (currentY + rowHeight > maxY) {
-      doc.addPage();
-      currentY = drawHeaderRow(doc.page.margins.top);
-    }
+  let index = 0;
+  let pageStartY = startY;
 
-    if (rowIndex % 2 === 0) {
-      doc.rect(left, currentY, pageWidth, rowHeight).fill("#fbfaf7");
-      doc.fillColor("#1d2b26");
-    }
+  while (index < rows.length) {
+    const rowsPerPage = Math.max(
+      1,
+      Math.floor((maxY - pageStartY - headerHeight) / rowHeight),
+    );
 
-    let x = left + 6;
-    columns.forEach((col, index) => {
-      const value = row?.[col.key] ?? "";
-      doc.text(String(value), x, currentY + 4, {
-        width: columnWidths[index] - 8,
-        align: "left",
-        ellipsis: true,
+    let currentY = drawHeaderRow(pageStartY);
+    doc.font("Helvetica").fontSize(9).fillColor("#1d2b26");
+
+    let rowsOnPage = 0;
+    while (rowsOnPage < rowsPerPage && index < rows.length) {
+      const row = rows[index];
+
+      if (rowsOnPage % 2 === 0) {
+        doc.rect(left, currentY, pageWidth, rowHeight).fill("#fbfaf7");
+        doc.fillColor("#1d2b26");
+      }
+
+      let x = left + 8;
+      columns.forEach((col, colIndex) => {
+        const value = row?.[col.key] ?? "";
+        doc.text(String(value), x, currentY + 6, {
+          width: columnWidths[colIndex] - 12,
+          height: rowHeight - 8,
+          align: "left",
+          lineBreak: false,
+          ellipsis: true,
+        });
+        x += columnWidths[colIndex];
       });
-      x += columnWidths[index];
-    });
 
-    currentY += rowHeight;
-  });
+      doc
+        .strokeColor("#efe8dd")
+        .lineWidth(0.5)
+        .moveTo(left, currentY + rowHeight)
+        .lineTo(left + pageWidth, currentY + rowHeight)
+        .stroke();
 
-  return currentY;
+      currentY += rowHeight;
+      index += 1;
+      rowsOnPage += 1;
+    }
+
+    drawFooter(doc);
+
+    if (index < rows.length) {
+      doc.addPage();
+      pageStartY = drawHeader(doc, title, metaLines, { compact: true });
+    }
+  }
+
+  return pageStartY;
 }
 
 function sendPdf(res, filename, title, metaLines, columns, rows) {
@@ -182,11 +344,11 @@ function sendPdf(res, filename, title, metaLines, columns, rows) {
   doc.pipe(res);
 
   const tableStartY = drawHeader(doc, title, metaLines);
-  drawTable(doc, tableStartY, columns, rows);
+  drawTable(doc, tableStartY, columns, rows, { title, metaLines });
+  drawFooter(doc);
 
   doc.end();
 }
-
 adminRouter.get("/overview", async (_req, res) => {
   try {
     const db = getDatabase();
@@ -510,6 +672,95 @@ adminRouter.get("/reports/users", async (req, res) => {
     console.error("Users report error:", error);
     res.status(500).json({
       message: "Unable to generate users report right now.",
+    });
+  }
+});
+
+adminRouter.get("/users", async (req, res) => {
+  try {
+    const db = getDatabase();
+    const usersCollection = db.collection(USERS_COLLECTION);
+    const rawQuery = String(req.query?.query || "").trim();
+    const limit = clampLimit(req.query?.limit, 25);
+    const filter = {};
+
+    if (rawQuery) {
+      const escaped = escapeRegex(rawQuery);
+      filter.$or = [
+        { email: { $regex: escaped, $options: "i" } },
+        { firstName: { $regex: escaped, $options: "i" } },
+        { lastName: { $regex: escaped, $options: "i" } },
+      ];
+    }
+
+    const users = await usersCollection
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .project({ firstName: 1, lastName: 1, email: 1, role: 1, createdAt: 1 })
+      .toArray();
+
+    res.status(200).json({
+      users: users.map((user) => ({
+        id: user._id?.toString?.() || String(user._id),
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+        role: user.role || "user",
+        createdAt: user.createdAt || "",
+      })),
+    });
+  } catch (error) {
+    console.error("Admin users error:", error);
+    res.status(500).json({
+      message: "Unable to load users right now.",
+    });
+  }
+});
+
+adminRouter.patch("/users/:id/role", async (req, res) => {
+  try {
+    const role = String(req.body?.role || "").toLowerCase();
+    if (!role || (role !== "admin" && role !== "user")) {
+      return res.status(400).json({
+        message: "Role must be either admin or user.",
+      });
+    }
+
+    const id = String(req.params?.id || "");
+    const db = getDatabase();
+    const usersCollection = db.collection(USERS_COLLECTION);
+
+    const filter = ObjectId.isValid(id)
+      ? { $or: [{ _id: new ObjectId(id) }, { _id: id }] }
+      : { _id: id };
+
+    const result = await usersCollection.findOneAndUpdate(
+      filter,
+      { $set: { role } },
+      { returnDocument: "after" },
+    );
+
+    if (!result.value) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Role updated successfully.",
+      user: {
+        id: result.value._id?.toString?.() || String(result.value._id),
+        firstName: result.value.firstName || "",
+        lastName: result.value.lastName || "",
+        email: result.value.email || "",
+        role: result.value.role || "user",
+      },
+    });
+  } catch (error) {
+    console.error("Admin role update error:", error);
+    return res.status(500).json({
+      message: "Unable to update role right now.",
     });
   }
 });

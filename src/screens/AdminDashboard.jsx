@@ -12,8 +12,23 @@ function formatNumber(value) {
   return numberFormat.format(value);
 }
 
+function getAuthToken() {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("authToken") || "";
+}
+
+function buildAuthHeaders() {
+  const token = getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function fetchJson(path) {
-  const response = await fetch(`${API_BASE}${path}`);
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: buildAuthHeaders(),
+  });
+  if (response.status === 401 || response.status === 403) {
+    throw new Error("auth");
+  }
   if (!response.ok) {
     throw new Error(`Request failed: ${response.status}`);
   }
@@ -21,7 +36,12 @@ async function fetchJson(path) {
 }
 
 async function downloadReport(path, filename) {
-  const response = await fetch(`${API_BASE}${path}`);
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: buildAuthHeaders(),
+  });
+  if (response.status === 401 || response.status === 403) {
+    throw new Error("auth");
+  }
   if (!response.ok) {
     throw new Error("Unable to download report.");
   }
@@ -47,6 +67,13 @@ const AdminDashboard = () => {
   const [usersFormat, setUsersFormat] = useState("csv");
   const [loadingOverview, setLoadingOverview] = useState(true);
   const [loadingSummary, setLoadingSummary] = useState(true);
+  const [users, setUsers] = useState([]);
+  const [userQuery, setUserQuery] = useState("");
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [roleDrafts, setRoleDrafts] = useState({});
+  const [userAction, setUserAction] = useState("");
+  const [userFeedback, setUserFeedback] = useState("");
   const [error, setError] = useState("");
   const [downloading, setDownloading] = useState("");
 
@@ -57,8 +84,15 @@ const AdminDashboard = () => {
       .then((data) => {
         if (mounted) setOverview(data);
       })
-      .catch(() => {
-        if (mounted) setError("Unable to load admin overview.");
+      .catch((err) => {
+        if (!mounted) return;
+        if (err?.message === "auth") {
+          setError(
+            "Admin access required. Please sign in with an admin account.",
+          );
+          return;
+        }
+        setError("Unable to load admin overview.");
       })
       .finally(() => {
         if (mounted) setLoadingOverview(false);
@@ -76,8 +110,15 @@ const AdminDashboard = () => {
       .then((data) => {
         if (mounted) setSummary(data.rows || []);
       })
-      .catch(() => {
-        if (mounted) setError("Unable to load activity summary.");
+      .catch((err) => {
+        if (!mounted) return;
+        if (err?.message === "auth") {
+          setError(
+            "Admin access required. Please sign in with an admin account.",
+          );
+          return;
+        }
+        setError("Unable to load activity summary.");
       })
       .finally(() => {
         if (mounted) setLoadingSummary(false);
@@ -87,6 +128,76 @@ const AdminDashboard = () => {
       mounted = false;
     };
   }, [rangeDays]);
+
+  const loadUsers = async (query = "") => {
+    setHasSearched(true);
+    setLoadingUsers(true);
+    setUserFeedback("");
+    try {
+      const qs = query ? `?query=${encodeURIComponent(query)}` : "";
+      const data = await fetchJson(`/api/admin/users${qs}`);
+      setUsers(data.users || []);
+    } catch (err) {
+      if (err?.message === "auth") {
+        setError(
+          "Admin access required. Please sign in with an admin account.",
+        );
+        return;
+      }
+      setUserFeedback("Unable to load users right now.");
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const handleRoleUpdate = async (userId) => {
+    const nextRole = roleDrafts[userId];
+    if (!nextRole) return;
+    setUserAction(userId);
+    setUserFeedback("");
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/admin/users/${userId}/role`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...buildAuthHeaders(),
+          },
+          body: JSON.stringify({ role: nextRole }),
+        },
+      );
+
+      if (response.status === 401 || response.status === 403) {
+        throw new Error("auth");
+      }
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload.message || "Unable to update role.");
+      }
+
+      setUsers((current) =>
+        current.map((user) =>
+          user.id === userId
+            ? { ...user, role: payload.user?.role || nextRole }
+            : user,
+        ),
+      );
+      setUserFeedback("Role updated successfully.");
+    } catch (err) {
+      if (err?.message === "auth") {
+        setError(
+          "Admin access required. Please sign in with an admin account.",
+        );
+      } else {
+        setUserFeedback(err?.message || "Unable to update role right now.");
+      }
+    } finally {
+      setUserAction("");
+    }
+  };
 
   const chartData = useMemo(() => {
     if (!summary.length) return [];
@@ -126,7 +237,13 @@ const AdminDashboard = () => {
         );
       }
     } catch (err) {
-      setError("Download failed. Please try again.");
+      if (err?.message === "auth") {
+        setError(
+          "Admin access required. Please sign in with an admin account.",
+        );
+      } else {
+        setError("Download failed. Please try again.");
+      }
     } finally {
       setDownloading("");
     }
@@ -140,8 +257,8 @@ const AdminDashboard = () => {
         logoTo="/admin"
         links={[
           { label: "Overview", to: "/admin", active: true },
-          { label: "User Dashboard", to: "/home" },
           { label: "Reports", to: "#reports" },
+          { label: "User Access", to: "#access" },
         ]}
         rightContent={
           <>
@@ -348,6 +465,96 @@ const AdminDashboard = () => {
                   </article>
                 ))
               )}
+            </div>
+          )}
+        </section>
+
+        <section id="access" className="admin-panel admin-access">
+          <header>
+            <h2>User Access</h2>
+            <span className="admin-muted">
+              Manage admin permissions for staff.
+            </span>
+          </header>
+
+          <div className="admin-access-controls">
+            <div className="admin-access-search">
+              <input
+                type="search"
+                placeholder="Search by name or email"
+                value={userQuery}
+                onChange={(event) => setUserQuery(event.target.value)}
+              />
+              <button
+                className="admin-primary"
+                onClick={() => loadUsers(userQuery)}
+                disabled={loadingUsers}
+              >
+                {loadingUsers ? "Searching..." : "Search"}
+              </button>
+            </div>
+            <button
+              className="admin-ghost"
+              onClick={() => {
+                setUserQuery("");
+                loadUsers("");
+              }}
+              disabled={loadingUsers}
+            >
+              Clear
+            </button>
+          </div>
+
+          {userFeedback ? (
+            <div className="admin-alert">{userFeedback}</div>
+          ) : null}
+
+          {!hasSearched ? (
+            <p className="admin-muted">
+              Search to look up a user by name or email.
+            </p>
+          ) : loadingUsers ? (
+            <p className="admin-muted">Loading users...</p>
+          ) : users.length === 0 ? (
+            <p className="admin-muted">No users found.</p>
+          ) : (
+            <div className="admin-access-list">
+              {users.map((user) => {
+                const displayName =
+                  `${user.firstName || ""} ${user.lastName || ""}`.trim();
+                const draftRole = roleDrafts[user.id] || user.role || "user";
+                return (
+                  <div key={user.id} className="admin-access-row">
+                    <div>
+                      <strong>{displayName || "Unnamed user"}</strong>
+                      <span className="admin-muted">
+                        {user.email || "No email"}
+                      </span>
+                    </div>
+                    <div className="admin-access-actions">
+                      <select
+                        value={draftRole}
+                        onChange={(event) =>
+                          setRoleDrafts((current) => ({
+                            ...current,
+                            [user.id]: event.target.value,
+                          }))
+                        }
+                      >
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                      <button
+                        className="admin-primary"
+                        onClick={() => handleRoleUpdate(user.id)}
+                        disabled={userAction === user.id}
+                      >
+                        {userAction === user.id ? "Updating..." : "Update"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>

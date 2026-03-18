@@ -7,14 +7,12 @@ import authRouter from "./routes/auth.routes.js";
 import healthRouter from "./routes/health.routes.js";
 import itemsRouter from "./routes/items.routes.js";
 import matchesRouter from "./routes/matches.routes.js";
+import chatsRouter from "./routes/chats.routes.js";
+import notificationsRouter from "./routes/notifications.routes.js";
 
 const app = express();
 
-app.use(
-  cors({
-    origin: env.corsOrigin,
-  }),
-);
+app.use(cors());
 app.use(express.json());
 
 app.get("/", (_req, res) => {
@@ -25,6 +23,8 @@ app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/items", itemsRouter);
 app.use("/api/matches", matchesRouter);
+app.use("/api/chats", chatsRouter);
+app.use("/api/notifications", notificationsRouter);
 app.use("/api/admin", adminRouter);
 
 app.use((req, res) => {

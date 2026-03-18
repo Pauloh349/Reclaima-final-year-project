@@ -28,8 +28,7 @@ export default function SmartMatches() {
   const [error, setError] = useState("");
 
   const handleMessageFinder = (item) => {
-    const chatId = item?._id || item?.matchSource?.id || "new";
-    navigate(`/chat/${chatId}`, { state: { item } });
+    navigate("/chat/new", { state: { item } });
   };
 
   useEffect(() => {
@@ -69,11 +68,16 @@ export default function SmartMatches() {
   }, [user?.email]);
 
   const headerText = useMemo(() => {
+    if (lostCount === 0) {
+      return "Report a lost item to unlock smart matches.";
+    }
     if (matches.length) {
       return `${matches.length} possible match${matches.length === 1 ? "" : "es"} for your reported items`;
     }
     return "We will show matches once your lost item reports align with found items.";
-  }, [matches.length]);
+  }, [lostCount, matches.length]);
+
+  const showGate = !loading && !error && lostCount === 0;
 
   return (
     <div className="smart-matches-page">
@@ -115,41 +119,61 @@ export default function SmartMatches() {
           </article>
         </section>
 
-        <div className="matches-results-head">
-          <h2>Recommended Results</h2>
-          <span>Sorted by newest reports</span>
-        </div>
-
-        {loading ? (
-          <p className="matches-muted">Loading matches...</p>
-        ) : error ? (
-          <p className="matches-muted">{error}</p>
-        ) : matches.length === 0 ? (
-          <p className="matches-muted">No matches yet.</p>
-        ) : (
-          <section className="matches-grid">
-            {matches.map((item) => (
-              <MatchCard
-                key={item._id || `${item.title}-${item.createdAt}`}
-                image={item.photoUrl}
-                title={item.title || "Untitled report"}
-                category={item.category || "General"}
-                location={item.location || item.zone || "No location"}
-                date={
-                  item.createdAt
-                    ? new Date(item.createdAt).toLocaleDateString()
-                    : ""
-                }
-                confidence={95}
-                status={
-                  item.matchSource?.title
-                    ? `Matched to ${item.matchSource.title}`
-                    : "Potential match"
-                }
-                onMessageFinder={() => handleMessageFinder(item)}
-              />
-            ))}
+        {showGate ? (
+          <section className="matches-gate">
+            <div>
+              <h2>Report a lost item to see matches</h2>
+              <p>
+                Once you submit a lost item, we will automatically compare it
+                against found reports and show potential matches here.
+              </p>
+            </div>
+            <button
+              className="matches-gate-btn"
+              onClick={() => navigate("/lost")}
+            >
+              Report Lost Item
+            </button>
           </section>
+        ) : (
+          <>
+            <div className="matches-results-head">
+              <h2>Recommended Results</h2>
+              <span>Sorted by newest reports</span>
+            </div>
+
+            {loading ? (
+              <p className="matches-muted">Loading matches...</p>
+            ) : error ? (
+              <p className="matches-muted">{error}</p>
+            ) : matches.length === 0 ? (
+              <p className="matches-muted">No matches yet.</p>
+            ) : (
+              <section className="matches-grid">
+                {matches.map((item) => (
+                  <MatchCard
+                    key={item._id || `${item.title}-${item.createdAt}`}
+                    image={item.photoUrl}
+                    title={item.title || "Untitled report"}
+                    category={item.category || "General"}
+                    location={item.location || item.zone || "No location"}
+                    date={
+                      item.createdAt
+                        ? new Date(item.createdAt).toLocaleDateString()
+                        : ""
+                    }
+                    confidence={95}
+                    status={
+                      item.matchSource?.title
+                        ? `Matched to ${item.matchSource.title}`
+                        : "Potential match"
+                    }
+                    onMessageFinder={() => handleMessageFinder(item)}
+                  />
+                ))}
+              </section>
+            )}
+          </>
         )}
       </main>
 

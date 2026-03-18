@@ -81,6 +81,32 @@
   outline: none;
 }
 
+.password-row input {
+  padding-right: 2.6rem;
+}
+
+.toggle-visibility {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 0.2rem;
+}
+
+.toggle-visibility .material-icons {
+  font-size: 1.1rem;
+}
+
+.toggle-visibility:focus-visible {
+  outline: 2px solid var(--color-primary-strong);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
 .input-icon {
   position: absolute;
   left: 0.7rem;
@@ -165,3 +191,4 @@
   opacity: 0.7;
   cursor: not-allowed;
 }
+

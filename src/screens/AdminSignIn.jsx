@@ -1,19 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../styles/signup.css";
+import "../styles/SignIn.css";
 import { notifyAuthUserChanged } from "../hooks/useAuthUser";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const NAME_REGEX = /^[\p{L}]+(?:[ '-][\p{L}]+)*$/u;
 
-const SignUp = () => {
+const AdminSignIn = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
     email: "",
     password: "",
-    consent: false,
   });
   const [errors, setErrors] = useState({});
   const [feedback, setFeedback] = useState("");
@@ -21,12 +17,11 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (event) => {
-    const { name, value, type, checked } = event.target;
-    const nextValue = type === "checkbox" ? checked : value;
+    const { name, value } = event.target;
 
     setFormData((current) => ({
       ...current,
-      [name]: nextValue,
+      [name]: value,
     }));
 
     setErrors((current) => {
@@ -40,35 +35,9 @@ const SignUp = () => {
     });
   };
 
-  const validateNameField = (value, label, key, validationErrors) => {
-    const trimmed = value.trim();
-
-    if (!trimmed) {
-      validationErrors[key] = `${label} is required.`;
-      return;
-    }
-
-    if (trimmed.length < 2) {
-      validationErrors[key] = `${label} must be at least 2 characters.`;
-      return;
-    }
-
-    if (trimmed.length > 50) {
-      validationErrors[key] = `${label} must be 50 characters or fewer.`;
-      return;
-    }
-
-    if (!NAME_REGEX.test(trimmed)) {
-      validationErrors[key] = `${label} can only contain letters, spaces, apostrophes, or hyphens.`;
-    }
-  };
-
   const validateForm = () => {
     const validationErrors = {};
     const email = formData.email.trim().toLowerCase();
-
-    validateNameField(formData.firstName, "First name", "firstName", validationErrors);
-    validateNameField(formData.lastName, "Last name", "lastName", validationErrors);
 
     if (!email) {
       validationErrors.email = "Email is required.";
@@ -80,10 +49,6 @@ const SignUp = () => {
       validationErrors.password = "Password is required.";
     } else if (formData.password.length < 8) {
       validationErrors.password = "Password must be at least 8 characters.";
-    }
-
-    if (!formData.consent) {
-      validationErrors.consent = "You must agree to the terms and privacy policy.";
     }
 
     return validationErrors;
@@ -104,14 +69,12 @@ const SignUp = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/signup", {
+      const response = await fetch("/api/auth/signin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
           email: formData.email.trim().toLowerCase(),
           password: formData.password,
         }),
@@ -121,7 +84,12 @@ const SignUp = () => {
 
       if (!response.ok) {
         setErrors(payload.errors || {});
-        setFeedback(payload.message || "Signup failed. Please try again.");
+        setFeedback(payload.message || "Signin failed. Please try again.");
+        return;
+      }
+
+      if (!payload.user || payload.user.role !== "admin") {
+        setFeedback("Admin access required. Please use an admin account.");
         return;
       }
 
@@ -135,10 +103,8 @@ const SignUp = () => {
 
       notifyAuthUserChanged();
 
-      const isAdmin = payload.user?.role === "admin";
-
-      setFeedback(payload.message || "Account created successfully.");
-      navigate(isAdmin ? "/admin" : "/home");
+      setFeedback(payload.message || "Signed in successfully.");
+      navigate("/admin");
     } catch {
       setFeedback("Could not connect to server. Please try again.");
     } finally {
@@ -151,60 +117,26 @@ const SignUp = () => {
       <main className="auth-shell">
         <div className="auth-brand">
           <div className="brand-icon">
-            <span className="material-icons">find_replace</span>
+            <span className="material-icons">verified_user</span>
           </div>
-          <span>Reclaima</span>
+          <span>Reclaima Admin</span>
         </div>
 
         <section className="auth-card">
           <header className="auth-header">
-            <h1>Create account</h1>
-            <p>Start reporting and tracking items across your campus.</p>
+            <h1>Admin sign in</h1>
+            <p>Access administrative controls and reports.</p>
           </header>
 
           <form className="auth-form" onSubmit={handleSubmit} noValidate>
-            <label htmlFor="signup-first-name">First Name</label>
-            <div className="input-row">
-              <span className="material-icons input-icon">person</span>
-              <input
-                type="text"
-                id="signup-first-name"
-                name="firstName"
-                placeholder="Jane"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className={errors.firstName ? "input-error" : ""}
-                maxLength={50}
-                autoComplete="given-name"
-              />
-            </div>
-            {errors.firstName ? <p className="field-error">{errors.firstName}</p> : null}
-
-            <label htmlFor="signup-last-name">Last Name</label>
-            <div className="input-row">
-              <span className="material-icons input-icon">person</span>
-              <input
-                type="text"
-                id="signup-last-name"
-                name="lastName"
-                placeholder="Doe"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className={errors.lastName ? "input-error" : ""}
-                maxLength={50}
-                autoComplete="family-name"
-              />
-            </div>
-            {errors.lastName ? <p className="field-error">{errors.lastName}</p> : null}
-
-            <label htmlFor="signup-email">University Email</label>
+            <label htmlFor="admin-signin-email">Admin Email</label>
             <div className="input-row">
               <span className="material-icons input-icon">school</span>
               <input
                 type="email"
-                id="signup-email"
+                id="admin-signin-email"
                 name="email"
-                placeholder="name@university.edu"
+                placeholder="admin@university.edu"
                 value={formData.email}
                 onChange={handleInputChange}
                 className={errors.email ? "input-error" : ""}
@@ -212,14 +144,14 @@ const SignUp = () => {
             </div>
             {errors.email ? <p className="field-error">{errors.email}</p> : null}
 
-            <label htmlFor="signup-password">Password</label>
+            <label htmlFor="admin-signin-password">Password</label>
             <div className="input-row password-row">
               <span className="material-icons input-icon">lock</span>
               <input
                 type={showPassword ? "text" : "password"}
-                id="signup-password"
+                id="admin-signin-password"
                 name="password"
-                placeholder="Create a secure password"
+                placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleInputChange}
                 className={errors.password ? "input-error" : ""}
@@ -238,32 +170,17 @@ const SignUp = () => {
             </div>
             {errors.password ? <p className="field-error">{errors.password}</p> : null}
 
-            <label className="consent-row" htmlFor="signup-consent">
-              <input
-                type="checkbox"
-                id="signup-consent"
-                name="consent"
-                checked={formData.consent}
-                onChange={handleInputChange}
-              />
-              <span>
-                I agree to the <Link to="/terms">Terms of Service</Link> and{" "}
-                <Link to="/privacy">Privacy Policy</Link>.
-              </span>
-            </label>
-            {errors.consent ? <p className="field-error">{errors.consent}</p> : null}
-
             {feedback ? <p className="form-feedback">{feedback}</p> : null}
 
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Account"}
+              {isSubmitting ? "Signing in..." : "Continue"}
               <span className="material-icons">arrow_forward</span>
             </button>
           </form>
 
           <footer className="auth-footer">
             <p>
-              Already have an account? <Link to="/signin">Sign in</Link>
+              Not an admin? <Link to="/signin">Go to user sign in</Link>
             </p>
           </footer>
         </section>
@@ -274,15 +191,11 @@ const SignUp = () => {
             <Link to="/terms">Terms of Service</Link>
             <Link to="/help">Help Center</Link>
           </div>
-          <p>Â© 2026 Reclaima University Platform</p>
+          <p>© 2026 Reclaima University Platform</p>
         </footer>
       </main>
     </div>
   );
 };
 
-export default SignUp;
-
-
-
-
+export default AdminSignIn;

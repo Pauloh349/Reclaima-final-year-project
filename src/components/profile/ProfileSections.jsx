@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import NavBar from "../NavBar";
-import { getUserDisplayName, useAuthUser } from "../../hooks/useAuthUser";
+import { getUserDisplayName, notifyAuthUserChanged, useAuthUser } from "../../hooks/useAuthUser";
 import userIcon from "../../assets/user-icon.png";
 import itemPlaceholder from "../../assets/default-image.png";
 
@@ -40,10 +40,22 @@ export function ProfileNavbar() {
 
 export function Content() {
   const user = useAuthUser();
+  const navigate = useNavigate();
   const displayName = getUserDisplayName(user);
   const [items, setItems] = useState([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const [itemsError, setItemsError] = useState("");
+  const handleLogout = () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("authUser");
+    }
+    notifyAuthUserChanged();
+    navigate("/signin", { replace: true });
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -120,6 +132,9 @@ export function Content() {
           <div className="simple-actions">
             <button className="simple-btn">Discard Changes</button>
             <button className="simple-btn primary">Save Changes</button>
+            <button type="button" className="simple-btn danger" onClick={handleLogout}>
+              Log out
+            </button>
           </div>
         </div>
 
@@ -204,3 +219,5 @@ export function ProfileFooter() {
     <footer className="footer">© 2026 University Lost & Found Platform</footer>
   );
 }
+
+

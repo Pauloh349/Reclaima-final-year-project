@@ -329,3 +329,77 @@
     justify-content: center;
   }
 }
+
+
+.admin-access-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-access-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.admin-access-search input {
+  flex: 1;
+  min-width: 220px;
+  border-radius: 10px;
+  border: 1px solid #d5d0c5;
+  padding: 10px 14px;
+  font-size: 14px;
+  background: #fbfaf7;
+  color: #1d2b26;
+}
+
+.admin-access-list {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.admin-access-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #efe8dd;
+}
+
+.admin-access-row strong {
+  display: block;
+  font-size: 15px;
+  color: #1d2b26;
+}
+
+.admin-access-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-access-actions select {
+  border-radius: 10px;
+  border: 1px solid #d5d0c5;
+  padding: 8px 12px;
+  background: #fbfaf7;
+}
+
+@media (max-width: 720px) {
+  .admin-access-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-access-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

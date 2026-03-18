@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ObjectId } from "mongodb";
 
 import { getDatabase } from "../db/client.js";
 
@@ -214,6 +215,144 @@ itemsRouter.get("/matches", async (req, res) => {
     console.error("Matches fetch error:", error);
     res.status(500).json({
       message: "Unable to load matches right now.",
+    });
+  }
+});
+
+itemsRouter.get("/summary", async (req, res) => {
+  try {
+    const rawEmail = String(req.query?.email || "").trim();
+
+    if (!rawEmail) {
+      return res.status(400).json({
+        message: "Email is required.",
+      });
+    }
+
+    const email = rawEmail.toLowerCase();
+    const collection = await getItemsCollection();
+    const emailRegex = new RegExp(`^${escapeRegex(email)}$`, "i");
+
+    const [lostCount, foundCount, openCount, recentItems] = await Promise.all([
+      collection.countDocuments({ type: "lost", contactEmail: emailRegex }),
+      collection.countDocuments({ type: "found", contactEmail: emailRegex }),
+      collection.countDocuments({ contactEmail: emailRegex, status: "open" }),
+      collection
+        .find({ contactEmail: emailRegex })
+        .sort({ createdAt: -1 })
+        .project({
+          title: 1,
+          type: 1,
+          category: 1,
+          location: 1,
+          zone: 1,
+          createdAt: 1,
+          status: 1,
+          photoUrl: 1,
+        })
+        .limit(5)
+        .toArray(),
+    ]);
+
+    res.status(200).json({
+      lostCount,
+      foundCount,
+      openCount,
+      recentItems: recentItems.map((item) => ({
+        id: item._id?.toString?.() || item._id,
+        title: item.title || "",
+        type: item.type || "",
+        category: item.category || "",
+        location: item.location || item.zone || "",
+        createdAt: item.createdAt || "",
+        status: item.status || "",
+        photoUrl: item.photoUrl || "",
+      })),
+    });
+  } catch (error) {
+    console.error("Summary fetch error:", error);
+    res.status(500).json({
+      message: "Unable to load summary right now.",
+    });
+  }
+});
+
+itemsRouter.get("/:id", async (req, res) => {
+  try {
+    const rawId = String(req.params?.id || "").trim();
+
+    if (!rawId) {
+      return res.status(400).json({
+        message: "Item id is required.",
+      });
+    }
+
+    if (!ObjectId.isValid(rawId)) {
+      return res.status(400).json({
+        message: "Invalid item id.",
+      });
+    }
+
+    const collection = await getItemsCollection();
+    const item = await collection.findOne({ _id: new ObjectId(rawId) });
+
+    if (!item) {
+      return res.status(404).json({
+        message: "Item not found.",
+      });
+    }
+
+    return res.status(200).json({ item });
+  } catch (error) {
+    console.error("Item fetch error:", error);
+    res.status(500).json({
+      message: "Unable to load item right now.",
+    });
+  }
+});
+
+itemsRouter.patch("/:id/status", async (req, res) => {
+  try {
+    const rawId = String(req.params?.id || "").trim();
+    const status = String(req.body?.status || "").trim();
+
+    if (!rawId) {
+      return res.status(400).json({
+        message: "Item id is required.",
+      });
+    }
+
+    if (!ObjectId.isValid(rawId)) {
+      return res.status(400).json({
+        message: "Invalid item id.",
+      });
+    }
+
+    if (!status) {
+      return res.status(400).json({
+        message: "Status is required.",
+      });
+    }
+
+    const collection = await getItemsCollection();
+    const now = new Date().toISOString();
+    const result = await collection.findOneAndUpdate(
+      { _id: new ObjectId(rawId) },
+      { $set: { status, updatedAt: now } },
+      { returnDocument: "after" },
+    );
+
+    if (!result?.value) {
+      return res.status(404).json({
+        message: "Item not found.",
+      });
+    }
+
+    return res.status(200).json({ item: result.value });
+  } catch (error) {
+    console.error("Status update error:", error);
+    res.status(500).json({
+      message: "Unable to update status right now.",
     });
   }
 });

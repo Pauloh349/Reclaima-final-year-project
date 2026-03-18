@@ -1,9 +1,122 @@
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import "../styles/ItemDetails.css";
 import NavBar from "../components/NavBar";
 import UserBadge from "../components/UserBadge";
 import { DetailRow, MiniCard } from "../components/item-details/ItemCards";
+import placeholderImage from "../assets/default-image.png";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+
+function formatDate(value) {
+  if (!value) return "Date not provided";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Date not provided";
+  return date.toLocaleDateString();
+}
 
 export default function ItemDetails() {
+  const { id } = useParams();
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [updating, setUpdating] = useState(false);
+  const [updateMessage, setUpdateMessage] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (!id) {
+      setError("Missing item id.");
+      setLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    setLoading(true);
+    setError("");
+
+    fetch(`${API_BASE}/api/items/${id}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Request failed");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (!mounted) return;
+        setItem(data.item || null);
+      })
+      .catch(() => {
+        if (mounted) setError("Unable to load item details right now.");
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  const handleMarkReturned = async () => {
+    if (!id || updating) return;
+
+    setUpdating(true);
+    setUpdateMessage("");
+
+    try {
+      const response = await fetch(`${API_BASE}/api/items/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "returned" }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setUpdateMessage(payload.message || "Unable to update status.");
+        return;
+      }
+
+      setItem(payload.item || item);
+      setUpdateMessage("Marked as returned.");
+    } catch {
+      setUpdateMessage("Unable to update status.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const pageData = useMemo(() => {
+    const title = item?.title || "Item";
+    const category = item?.category || "Uncategorized";
+    const description = item?.description || "No description provided.";
+    const location = item?.location || item?.zone || "Location not provided";
+    const dateFound = formatDate(item?.createdAt);
+    const handover = item?.handoverMethod || "Not specified";
+    const status = item?.status || "unknown";
+    const image = item?.photoUrl || placeholderImage;
+    const reporter = item?.contactName || item?.contactEmail || "Reported Finder";
+
+    return {
+      title,
+      category,
+      description,
+      location,
+      dateFound,
+      handover,
+      status,
+      image,
+      reporter,
+    };
+  }, [item]);
+
+  const isReturned = pageData.status === "returned";
+
   return (
     <div className="item-page">
       <NavBar
@@ -27,110 +140,107 @@ export default function ItemDetails() {
         <div className="item-breadcrumb">
           <span>Matches</span>
           <span className="material-icons">chevron_right</span>
-          <span>Electronics</span>
+          <span>{pageData.category}</span>
           <span className="material-icons">chevron_right</span>
-          <strong>MacBook Pro 14"</strong>
+          <strong>{pageData.title}</strong>
         </div>
 
-        <section className="item-layout">
-          <div className="item-primary">
-            <div className="item-image-card">
-              <img src="/src/assets/tech-bag.jpg" alt="Laptop" />
-              <span className="privacy-badge">
-                <span className="material-icons">visibility_off</span>
-                Privacy Protected
-              </span>
-            </div>
+        {loading ? (
+          <p className="matches-muted">Loading item details...</p>
+        ) : error ? (
+          <p className="matches-muted">{error}</p>
+        ) : !item ? (
+          <p className="matches-muted">Item not found.</p>
+        ) : (
+          <section className="item-layout">
+            <div className="item-primary">
+              <div className="item-image-card">
+                <img src={pageData.image} alt={pageData.title} />
+                <span className="privacy-badge">
+                  <span className="material-icons">visibility_off</span>
+                  Privacy Protected
+                </span>
+              </div>
 
-            <div className="item-description-card">
-              <h2>Finder Description</h2>
-              <p>
-                Found on the 3rd floor of the Main Library near study cubicles.
-                Device appears functional and was turned in without accessories.
-              </p>
+              <div className="item-description-card">
+                <h2>Finder Description</h2>
+                <p>{pageData.description}</p>
 
-              <div className="tip-box">
-                <span className="material-icons">info</span>
-                <p>
-                  Ownership is verified before release. Prepare unique details
-                  when making a claim.
-                </p>
+                <div className="tip-box">
+                  <span className="material-icons">info</span>
+                  <p>
+                    Ownership is verified before release. Prepare unique details
+                    when making a claim.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <aside className="item-side">
-            <div className="summary-card">
-              <span className="availability">Available</span>
-              <h1>Apple MacBook Pro 14" (Silver)</h1>
+            <aside className="item-side">
+              <div className="summary-card">
+                <span className="availability">
+                  {pageData.status === "open" ? "Available" : pageData.status}
+                </span>
+                <h1>{pageData.title}</h1>
 
-              <DetailRow
-                icon="category"
-                label="Category"
-                value="Electronics and Computers"
-              />
-              <DetailRow
-                icon="location_on"
-                label="Found At"
-                value="North Campus, Science Library"
-              />
-              <DetailRow
-                icon="calendar_today"
-                label="Date Found"
-                value="Oct 24, 2024"
-              />
-              <DetailRow
-                icon="handshake"
-                label="Return Method"
-                value="Campus Security Office"
-              />
-            </div>
-
-            <div className="action-card">
-              <button className="btn-primary-action">
-                <span className="material-icons">task_alt</span>
-                Start Claim
-              </button>
-              <button className="btn-secondary-action">
-                <span className="material-icons">forum</span>
-                Message Finder
-              </button>
-              <p className="action-note">
-                False claims may lead to account restrictions.
-              </p>
-            </div>
-
-            <div className="reporter-card">
-              <span className="material-icons">person</span>
-              <div>
-                <small>Reported by</small>
-                <strong>Verified Student Finder</strong>
+                <DetailRow
+                  icon="category"
+                  label="Category"
+                  value={pageData.category}
+                />
+                <DetailRow
+                  icon="location_on"
+                  label="Found At"
+                  value={pageData.location}
+                />
+                <DetailRow
+                  icon="calendar_today"
+                  label="Date Found"
+                  value={pageData.dateFound}
+                />
+                <DetailRow
+                  icon="handshake"
+                  label="Return Method"
+                  value={pageData.handover}
+                />
               </div>
-            </div>
-          </aside>
-        </section>
 
-        <section className="nearby-section">
-          <h3>Similar Items Nearby</h3>
-          <div className="nearby-grid">
-            <MiniCard
-              title="Blue HydroFlask"
-              imageSrc="/src/assets/tech-bag.jpg"
-            />
-            <MiniCard
-              title="Leather Wallet"
-              imageSrc="/src/assets/padded-bag.jpg"
-            />
-            <MiniCard
-              title="Ray-Ban Sunglasses"
-              imageSrc="/src/assets/laptop-carrier.webp"
-            />
-            <MiniCard
-              title="Sony Headphones"
-              imageSrc="/src/assets/tech-bag.jpg"
-            />
-          </div>
-        </section>
+              <div className="action-card">
+                <button className="btn-primary-action">
+                  <span className="material-icons">task_alt</span>
+                  Start Claim
+                </button>
+                <button className="btn-secondary-action">
+                  <span className="material-icons">forum</span>
+                  Message Finder
+                </button>
+                <button
+                  className="btn-secondary-action"
+                  onClick={handleMarkReturned}
+                  disabled={isReturned || updating}
+                >
+                  <span className="material-icons">assignment_turned_in</span>
+                  {isReturned ? "Returned" : "Mark as Returned"}
+                </button>
+                {updateMessage ? (
+                  <p className="action-note">{updateMessage}</p>
+                ) : (
+                  <p className="action-note">
+                    False claims may lead to account restrictions.
+                  </p>
+                )}
+              </div>
+
+              <div className="reporter-card">
+                <span className="material-icons">person</span>
+                <div>
+                  <small>Reported by</small>
+                  <strong>{pageData.reporter}</strong>
+                </div>
+              </div>
+            </aside>
+          </section>
+        )}
       </main>
 
       <footer className="item-footer">
@@ -139,6 +249,3 @@ export default function ItemDetails() {
     </div>
   );
 }
-
-
-

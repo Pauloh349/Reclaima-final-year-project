@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import UserBadge from "../components/UserBadge";
@@ -183,19 +183,41 @@ const SelectZone = () => {
           </div>
         </section>
 
+        <section className="zone-summary">
+          <div>
+            <small>Category</small>
+            <strong>{draft?.category || "Not selected"}</strong>
+          </div>
+          <div>
+            <small>Selected Zone</small>
+            <strong>{selectedZone || "Choose a zone"}</strong>
+          </div>
+          <div>
+            <small>Contact Email</small>
+            <strong>{contactEmail || "Add email"}</strong>
+          </div>
+          <div>
+            <small>Draft</small>
+            <strong>{draft?.category ? "Saved" : "Not saved"}</strong>
+          </div>
+        </section>
+
         <section className="zone-layout">
           <aside className="zone-panel">
             <div className="panel-head">
               <h2>Select Zone</h2>
               <small>{filteredZones.length} available</small>
             </div>
-            <input
-              type="text"
-              placeholder="Search for a specific building..."
-              className="search-input"
-              value={zoneQuery}
-              onChange={(event) => setZoneQuery(event.target.value)}
-            />
+            <div className="zone-search">
+              <span className="material-icons">search</span>
+              <input
+                type="text"
+                placeholder="Search for a specific building..."
+                className="search-input"
+                value={zoneQuery}
+                onChange={(event) => setZoneQuery(event.target.value)}
+              />
+            </div>
 
             <div className="zone-list">
               {filteredZones.length === 0 ? (
@@ -208,6 +230,8 @@ const SelectZone = () => {
                       selectedZone === zone.name ? "active" : ""
                     }`}
                     onClick={() => setSelectedZone(zone.name)}
+                    type="button"
+                    aria-pressed={selectedZone === zone.name}
                   >
                     <div className="zone-icon">
                       <span className="material-icons">{zone.icon}</span>

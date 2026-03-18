@@ -14,6 +14,7 @@ const SignIn = () => {
   const [errors, setErrors] = useState({});
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -95,8 +96,12 @@ const SignIn = () => {
         localStorage.setItem("authUser", JSON.stringify(payload.user));
       }
 
+      notifyAuthUserChanged();
+
+      const isAdmin = payload.user?.role === "admin";
+
       setFeedback(payload.message || "Signed in successfully.");
-      navigate("/home");
+      navigate(isAdmin ? "/admin" : "/home");
     } catch {
       setFeedback("Could not connect to server. Please try again.");
     } finally {
@@ -137,10 +142,10 @@ const SignIn = () => {
             {errors.email ? <p className="field-error">{errors.email}</p> : null}
 
             <label htmlFor="signin-password">Password</label>
-            <div className="input-row">
+            <div className="input-row password-row">
               <span className="material-icons input-icon">lock</span>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="signin-password"
                 name="password"
                 placeholder="Enter your password"
@@ -148,6 +153,17 @@ const SignIn = () => {
                 onChange={handleInputChange}
                 className={errors.password ? "input-error" : ""}
               />
+              <button
+                type="button"
+                className="toggle-visibility"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((current) => !current)}
+              >
+                <span className="material-icons">
+                  {showPassword ? "visibility_off" : "visibility"}
+                </span>
+              </button>
             </div>
             {errors.password ? <p className="field-error">{errors.password}</p> : null}
 
@@ -180,5 +196,7 @@ const SignIn = () => {
 };
 
 export default SignIn;
+
+
 
 

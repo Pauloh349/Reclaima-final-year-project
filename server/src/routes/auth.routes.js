@@ -16,6 +16,7 @@ function normalizeEmail(email) {
     .toLowerCase();
 }
 
+
 function normalizeName(name) {
   return String(name || "").trim();
 }
@@ -133,12 +134,16 @@ authRouter.post("/signup", async (req, res) => {
 
     const passwordHash = await hashPassword(password);
     const now = new Date().toISOString();
+    const token = createToken();
 
     const insertResult = await users.insertOne({
       firstName,
       lastName,
       email,
       passwordHash,
+      role: "user",
+      authToken: token,
+      authTokenIssuedAt: now,
       createdAt: now,
       updatedAt: now,
     });
@@ -150,8 +155,9 @@ authRouter.post("/signup", async (req, res) => {
         firstName,
         lastName,
         email,
+        role: "user",
       },
-      token: createToken(),
+      token,
     });
   } catch (error) {
     console.error("Signup error:", error);
@@ -190,6 +196,17 @@ authRouter.post("/signin", async (req, res) => {
       });
     }
 
+    const token = createToken();
+    await users.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          authToken: token,
+          authTokenIssuedAt: new Date().toISOString(),
+        },
+      },
+    );
+
     return res.status(200).json({
       message: "Signed in successfully.",
       user: {
@@ -197,8 +214,9 @@ authRouter.post("/signin", async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        role: user.role || "user",
       },
-      token: createToken(),
+      token,
     });
   } catch (error) {
     console.error("Signin error:", error);

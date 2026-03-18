@@ -220,6 +220,12 @@
   color: #06241e;
 }
 
+.simple-btn.danger {
+  border-color: rgba(198, 40, 40, 0.35);
+  background: rgba(198, 40, 40, 0.08);
+  color: #9f1b1b;
+}
+
 .profile-page .footer {
   text-align: center;
   padding: 1.4rem;
@@ -257,3 +263,4 @@
     height: 180px;
   }
 }
+
