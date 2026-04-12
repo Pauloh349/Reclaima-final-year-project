@@ -10,6 +10,7 @@ const AdminSignIn = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    humanCheck: false,
   });
   const [errors, setErrors] = useState({});
   const [feedback, setFeedback] = useState("");
@@ -17,11 +18,12 @@ const AdminSignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (event) => {
-    const { name, value } = event.target;
+    const { name, value, type, checked } = event.target;
+    const nextValue = type === "checkbox" ? checked : value;
 
     setFormData((current) => ({
       ...current,
-      [name]: value,
+      [name]: nextValue,
     }));
 
     setErrors((current) => {
@@ -49,6 +51,10 @@ const AdminSignIn = () => {
       validationErrors.password = "Password is required.";
     } else if (formData.password.length < 8) {
       validationErrors.password = "Password must be at least 8 characters.";
+    }
+
+    if (!formData.humanCheck) {
+      validationErrors.humanCheck = "Please confirm you are not a robot.";
     }
 
     return validationErrors;
@@ -170,6 +176,19 @@ const AdminSignIn = () => {
             </div>
             {errors.password ? <p className="field-error">{errors.password}</p> : null}
 
+            <label className="robot-row" htmlFor="admin-human-check">
+              <input
+                type="checkbox"
+                id="admin-human-check"
+                name="humanCheck"
+                checked={formData.humanCheck}
+                onChange={handleInputChange}
+                className={errors.humanCheck ? "input-error" : ""}
+              />
+              <span>I am not a robot.</span>
+            </label>
+            {errors.humanCheck ? <p className="field-error">{errors.humanCheck}</p> : null}
+
             {feedback ? <p className="form-feedback">{feedback}</p> : null}
 
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
@@ -191,7 +210,7 @@ const AdminSignIn = () => {
             <Link to="/terms">Terms of Service</Link>
             <Link to="/help">Help Center</Link>
           </div>
-          <p>© 2026 Reclaima University Platform</p>
+          <p>ï¿½ 2026 Reclaima University Platform</p>
         </footer>
       </main>
     </div>

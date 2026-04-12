@@ -10,6 +10,7 @@ const SignIn = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    humanCheck: false,
   });
   const [errors, setErrors] = useState({});
   const [feedback, setFeedback] = useState("");
@@ -17,11 +18,12 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (event) => {
-    const { name, value } = event.target;
+    const { name, value, type, checked } = event.target;
+    const nextValue = type === "checkbox" ? checked : value;
 
     setFormData((current) => ({
       ...current,
-      [name]: value,
+      [name]: nextValue,
     }));
 
     setErrors((current) => {
@@ -49,6 +51,10 @@ const SignIn = () => {
       validationErrors.password = "Password is required.";
     } else if (formData.password.length < 8) {
       validationErrors.password = "Password must be at least 8 characters.";
+    }
+
+    if (!formData.humanCheck) {
+      validationErrors.humanCheck = "Please confirm you are not a robot.";
     }
 
     return validationErrors;
@@ -85,6 +91,11 @@ const SignIn = () => {
       if (!response.ok) {
         setErrors(payload.errors || {});
         setFeedback(payload.message || "Signin failed. Please try again.");
+
+        if (payload.requiresEmailVerification) {
+          navigate(`/verify-email?email=${encodeURIComponent(formData.email.trim().toLowerCase())}`);
+        }
+
         return;
       }
 
@@ -167,6 +178,19 @@ const SignIn = () => {
             </div>
             {errors.password ? <p className="field-error">{errors.password}</p> : null}
 
+            <label className="robot-row" htmlFor="signin-human-check">
+              <input
+                type="checkbox"
+                id="signin-human-check"
+                name="humanCheck"
+                checked={formData.humanCheck}
+                onChange={handleInputChange}
+                className={errors.humanCheck ? "input-error" : ""}
+              />
+              <span>I am not a robot.</span>
+            </label>
+            {errors.humanCheck ? <p className="field-error">{errors.humanCheck}</p> : null}
+
             {feedback ? <p className="form-feedback">{feedback}</p> : null}
 
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
@@ -196,7 +220,3 @@ const SignIn = () => {
 };
 
 export default SignIn;
-
-
-
-

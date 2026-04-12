@@ -19,6 +19,7 @@ import HelpCenter from "../screens/HelpCenter";
 import HowItWorks from "../screens/HowItWorks";
 import AdminDashboard from "../screens/AdminDashboard";
 import NotFound from "../screens/NotFound";
+import VerifyEmail from "../screens/VerifyEmail";
 import { useAuthUser } from "../hooks/useAuthUser";
 
 const ProtectedRoute = ({ children }) => {
@@ -26,12 +27,18 @@ const ProtectedRoute = ({ children }) => {
   if (!user) {
     return <Navigate to="/signin" replace />;
   }
+  if (user.emailVerified === false) {
+    return <Navigate to="/verify-email" replace />;
+  }
   return children;
 };
 
 const PublicRoute = ({ children }) => {
   const user = useAuthUser();
   if (user) {
+    if (user.emailVerified === false) {
+      return <Navigate to="/verify-email" replace />;
+    }
     const isAdmin = user.role === "admin";
     return <Navigate to={isAdmin ? "/admin" : "/home"} replace />;
   }
@@ -71,6 +78,7 @@ const AppRouter = () => {
             </PublicRoute>
           }
         />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route
           path="/admin/signin"
           element={

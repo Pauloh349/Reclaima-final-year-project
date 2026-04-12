@@ -2,9 +2,11 @@ import { Router } from "express";
 import { ObjectId } from "mongodb";
 
 import { getDatabase } from "../db/client.js";
+import { sendMatchEmail } from "../services/email.js";
 
 const itemsRouter = Router();
 const ITEMS_COLLECTION = "items";
+const MATCH_NOTIFICATIONS_COLLECTION = "match_notifications";
 const ALLOWED_ITEM_FIELDS = [
   "title",
   "category",
@@ -17,8 +19,11 @@ const ALLOWED_ITEM_FIELDS = [
   "handoverMethod",
   "photoUrl",
 ];
+const MATCH_EMAIL_COOLDOWN_MINUTES = 180;
+const MATCH_EMAIL_TTL_DAYS = 30;
 
 let indexesReady = false;
+let matchIndexesReady = false;
 
 async function getItemsCollection() {
   const db = getDatabase();
@@ -31,6 +36,26 @@ async function getItemsCollection() {
     await collection.createIndex({ type: 1, contactEmail: 1, createdAt: -1 });
     await collection.createIndex({ type: 1, category: 1, createdAt: -1 });
     indexesReady = true;
+  }
+
+  return collection;
+}
+
+async function getMatchNotificationsCollection() {
+  const db = getDatabase();
+  const collection = db.collection(MATCH_NOTIFICATIONS_COLLECTION);
+
+  if (!matchIndexesReady) {
+    await collection.createIndex(
+      { lostItemId: 1, foundItemId: 1 },
+      { unique: true },
+    );
+    await collection.createIndex({ lostItemId: 1, sentAt: -1 });
+    await collection.createIndex(
+      { sentAt: 1 },
+      { expireAfterSeconds: MATCH_EMAIL_TTL_DAYS * 24 * 60 * 60 },
+    );
+    matchIndexesReady = true;
   }
 
   return collection;
@@ -108,6 +133,102 @@ function isMatch(lostItem, foundItem) {
   }
 
   return true;
+}
+
+function isWithinCooldown(sentAt) {
+  if (!sentAt) return false;
+  const sentMs = new Date(sentAt).getTime();
+  if (!Number.isFinite(sentMs)) return false;
+  return Date.now() - sentMs < MATCH_EMAIL_COOLDOWN_MINUTES * 60 * 1000;
+}
+
+async function shouldSendMatchEmail(notifications, lostItemId, foundItemId) {
+  if (!lostItemId || !foundItemId) return false;
+
+  const alreadySent = await notifications.findOne({
+    lostItemId,
+    foundItemId,
+  });
+
+  if (alreadySent) {
+    return false;
+  }
+
+  if (MATCH_EMAIL_COOLDOWN_MINUTES > 0) {
+    const lastSent = await notifications.findOne(
+      { lostItemId },
+      { sort: { sentAt: -1 } },
+    );
+
+    if (lastSent && isWithinCooldown(lastSent.sentAt)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+async function notifyLostItemMatches(foundItem) {
+  const category = String(foundItem?.category || "").trim();
+  const location = String(foundItem?.location || "").trim();
+  const zone = String(foundItem?.zone || "").trim();
+
+  if (!category || (!location && !zone)) {
+    return;
+  }
+
+  const collection = await getItemsCollection();
+  const notifications = await getMatchNotificationsCollection();
+  const categoryRegex = new RegExp(`^${escapeRegex(category)}$`, "i");
+  const candidates = await collection
+    .find({ type: "lost", category: categoryRegex })
+    .sort({ createdAt: -1 })
+    .toArray();
+
+  if (!candidates.length) return;
+
+  const foundItemId = foundItem?._id?.toString?.() || foundItem?.id;
+  const sendTasks = [];
+
+  for (const lostItem of candidates) {
+    if (!isMatch(lostItem, foundItem)) continue;
+    const email = String(lostItem?.contactEmail || "").trim();
+    if (!email) continue;
+
+    const lostItemId = lostItem?._id?.toString?.() || lostItem?._id;
+    const shouldSend = await shouldSendMatchEmail(
+      notifications,
+      lostItemId,
+      foundItemId,
+    );
+
+    if (!shouldSend) continue;
+
+    sendTasks.push(
+      sendMatchEmail({
+        to: email,
+        lostItem,
+        foundItem: {
+          ...foundItem,
+          id: foundItemId,
+        },
+      })
+        .then(() =>
+          notifications.insertOne({
+            lostItemId,
+            foundItemId,
+            sentAt: new Date().toISOString(),
+          }),
+        )
+        .catch((error) => {
+          console.error("Match email error:", error);
+        }),
+    );
+  }
+
+  if (!sendTasks.length) return;
+
+  await Promise.allSettled(sendTasks);
 }
 
 itemsRouter.get("/", async (req, res) => {
@@ -380,6 +501,15 @@ itemsRouter.post("/found", async (req, res) => {
     const collection = await getItemsCollection();
     const newItem = buildItemPayload(req.body, "found");
     const insertResult = await collection.insertOne(newItem);
+
+    const foundItem = {
+      ...newItem,
+      _id: insertResult.insertedId,
+    };
+
+    notifyLostItemMatches(foundItem).catch((error) => {
+      console.error("Match notification error:", error);
+    });
 
     res.status(201).json({
       id: insertResult.insertedId,

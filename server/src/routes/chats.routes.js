@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
-
 import { getDatabase } from "../db/client.js";
 import { sendToUser } from "../services/realtime.js";
 

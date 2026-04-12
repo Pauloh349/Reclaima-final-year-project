@@ -1,6 +1,5 @@
 import cors from "cors";
 import express from "express";
-
 import { env } from "./config/env.js";
 import adminRouter from "./routes/admin.routes.js";
 import authRouter from "./routes/auth.routes.js";

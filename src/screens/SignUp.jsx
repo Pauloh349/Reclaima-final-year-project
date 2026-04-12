@@ -14,6 +14,7 @@ const SignUp = () => {
     email: "",
     password: "",
     consent: false,
+    humanCheck: false,
   });
   const [errors, setErrors] = useState({});
   const [feedback, setFeedback] = useState("");
@@ -86,6 +87,10 @@ const SignUp = () => {
       validationErrors.consent = "You must agree to the terms and privacy policy.";
     }
 
+    if (!formData.humanCheck) {
+      validationErrors.humanCheck = "Please confirm you are not a robot.";
+    }
+
     return validationErrors;
   };
 
@@ -122,6 +127,17 @@ const SignUp = () => {
       if (!response.ok) {
         setErrors(payload.errors || {});
         setFeedback(payload.message || "Signup failed. Please try again.");
+
+        if (payload.requiresEmailVerification) {
+          navigate(`/verify-email?email=${encodeURIComponent(formData.email.trim().toLowerCase())}`);
+        }
+
+        return;
+      }
+
+      if (payload.requiresEmailVerification) {
+        setFeedback(payload.message || "Please verify your email to continue.");
+        navigate(`/verify-email?email=${encodeURIComponent(formData.email.trim().toLowerCase())}`);
         return;
       }
 
@@ -253,6 +269,19 @@ const SignUp = () => {
             </label>
             {errors.consent ? <p className="field-error">{errors.consent}</p> : null}
 
+            <label className="robot-row" htmlFor="signup-human-check">
+              <input
+                type="checkbox"
+                id="signup-human-check"
+                name="humanCheck"
+                checked={formData.humanCheck}
+                onChange={handleInputChange}
+                className={errors.humanCheck ? "input-error" : ""}
+              />
+              <span>I am not a robot.</span>
+            </label>
+            {errors.humanCheck ? <p className="field-error">{errors.humanCheck}</p> : null}
+
             {feedback ? <p className="form-feedback">{feedback}</p> : null}
 
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
@@ -282,7 +311,3 @@ const SignUp = () => {
 };
 
 export default SignUp;
-
-
-
-
