@@ -26,13 +26,33 @@ export async function connectToDatabase() {
   }
 
   client = createClient();
-  await client.connect();
-  db = client.db(env.mongoDbName);
-  connected = true;
+  try {
+    await client.connect();
+    db = client.db(env.mongoDbName);
+    connected = true;
 
-  console.log(`MongoDB connected (db: ${env.mongoDbName}).`);
+    console.log(`MongoDB connected (db: ${env.mongoDbName}).`);
 
-  return db;
+    return db;
+  } catch (error) {
+    await closeDatabaseConnection();
+
+    const message = String(error?.message || error);
+    if (message.includes("querySrv") || message.includes("ESERVFAIL")) {
+      let hostname = "the MongoDB host";
+      try {
+        hostname = new URL(env.mongoDbConnectionUrl).hostname || hostname;
+      } catch {
+        // Keep the generic fallback if the URI is malformed.
+      }
+
+      throw new Error(
+        `Unable to resolve the MongoDB Atlas SRV record for ${hostname}. Check the hostname in MONGODB_URI and your DNS/network access.`,
+      );
+    }
+
+    throw error;
+  }
 }
 
 export function getDatabase() {

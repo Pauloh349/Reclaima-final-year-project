@@ -37,8 +37,7 @@ export function useAuthUser() {
 }
 
 export function getUserDisplayName(user) {
-  if (!user) return "Guest";
+  if (!user) return;
   const name = `${user.firstName || ""} ${user.lastName || ""}`.trim();
   return name || user.email || "Guest";
 }
-

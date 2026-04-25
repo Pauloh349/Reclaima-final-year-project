@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import UserBadge from "../components/UserBadge";
+import { getUserDisplayName, useAuthUser } from "../hooks/useAuthUser";
 import "../styles/admin-dashboard.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
@@ -56,7 +57,25 @@ async function downloadReport(path, filename) {
   URL.revokeObjectURL(url);
 }
 
+async function submitItemReport(payload) {
+  const response = await fetch(`${API_BASE}/api/items/${payload.type}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to create report.");
+  }
+
+  return response.json();
+}
+
 const AdminDashboard = () => {
+  const adminUser = useAuthUser();
+  const adminDisplayName = getUserDisplayName(adminUser);
   const [overview, setOverview] = useState(null);
   const [summary, setSummary] = useState([]);
   const [rangeDays, setRangeDays] = useState(30);
@@ -74,8 +93,26 @@ const AdminDashboard = () => {
   const [roleDrafts, setRoleDrafts] = useState({});
   const [userAction, setUserAction] = useState("");
   const [userFeedback, setUserFeedback] = useState("");
+  const [itemTypeDraft, setItemTypeDraft] = useState("found");
+  const [itemTitle, setItemTitle] = useState("");
+  const [itemCategory, setItemCategory] = useState("Phone");
+  const [itemZone, setItemZone] = useState("Main Library");
+  const [itemLocation, setItemLocation] = useState("");
+  const [itemDescription, setItemDescription] = useState("");
+  const [itemContactName, setItemContactName] = useState("");
+  const [itemContactEmail, setItemContactEmail] = useState("");
+  const [itemContactPhone, setItemContactPhone] = useState("");
+  const [itemHandover, setItemHandover] = useState("security");
+  const [itemFeedback, setItemFeedback] = useState("");
+  const [itemSubmitting, setItemSubmitting] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [error, setError] = useState("");
   const [downloading, setDownloading] = useState("");
+
+  useEffect(() => {
+    setItemContactName((current) => current || adminDisplayName);
+    setItemContactEmail((current) => current || adminUser?.email || "");
+  }, [adminDisplayName, adminUser?.email]);
 
   useEffect(() => {
     let mounted = true;
@@ -199,6 +236,62 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleCreateItem = async () => {
+    setItemFeedback("");
+
+    if (!itemTitle.trim()) {
+      setItemFeedback("Add a title before creating the report.");
+      return;
+    }
+
+    if (!itemCategory.trim()) {
+      setItemFeedback("Choose a category for the item.");
+      return;
+    }
+
+    if (!itemZone.trim()) {
+      setItemFeedback("Choose a campus zone for the item.");
+      return;
+    }
+
+    if (!itemContactEmail.trim()) {
+      setItemFeedback("Add a contact email for the report.");
+      return;
+    }
+
+    const payload = {
+      type: itemTypeDraft,
+      title: itemTitle.trim(),
+      category: itemCategory.trim(),
+      zone: itemZone.trim(),
+      location: itemLocation.trim(),
+      description: itemDescription.trim(),
+      contactName: itemContactName.trim(),
+      contactEmail: itemContactEmail.trim(),
+      contactPhone: itemContactPhone.trim(),
+      handoverMethod: itemHandover,
+    };
+
+    try {
+      setItemSubmitting(true);
+      await submitItemReport(payload);
+      setItemFeedback("Item added successfully.");
+      setItemTitle("");
+      setItemLocation("");
+      setItemDescription("");
+      setItemContactName(adminDisplayName);
+      setItemContactEmail(adminUser?.email || "");
+      setItemContactPhone("");
+      setItemTypeDraft("found");
+      setItemHandover("security");
+      setIsCreateModalOpen(false);
+    } catch {
+      setItemFeedback("Unable to add the item right now.");
+    } finally {
+      setItemSubmitting(false);
+    }
+  };
+
   const chartData = useMemo(() => {
     if (!summary.length) return [];
     return summary.slice(-14);
@@ -256,9 +349,9 @@ const AdminDashboard = () => {
         logoText="Reclaima Admin"
         logoTo="/admin"
         links={[
-          { label: "Overview", to: "/admin", active: true },
+          { label: "Overview", to: "#overview", active: true },
+          { label: "Users", to: "#users" },
           { label: "Reports", to: "#reports" },
-          { label: "User Access", to: "#access" },
         ]}
         rightContent={
           <>
@@ -276,8 +369,8 @@ const AdminDashboard = () => {
             <span className="admin-eyebrow">System Control</span>
             <h1>Administrative Overview</h1>
             <p>
-              Monitor user activity, lost and found reports, and generate
-              compliance-ready exports.
+              Monitor user activity, add lost or found items on behalf of the
+              team, and generate compliance-ready exports.
             </p>
             <div className="admin-hero-actions">
               <label className="admin-format">
@@ -303,6 +396,17 @@ const AdminDashboard = () => {
               <a className="admin-ghost" href="#reports">
                 View Reports
               </a>
+              <button
+                className="admin-ghost admin-ghost-strong"
+                type="button"
+                onClick={() => {
+                  setItemFeedback("");
+                  setIsCreateModalOpen(true);
+                }}
+              >
+                Add Item
+                <span className="material-icons">add</span>
+              </button>
             </div>
           </div>
           <div className="admin-hero-card">
@@ -323,7 +427,33 @@ const AdminDashboard = () => {
 
         {error && <div className="admin-alert">{error}</div>}
 
-        <section className="admin-metrics">
+        <section id="overview" className="admin-zone admin-zone-overview">
+          <div className="admin-zone-head">
+            <div>
+              <span className="admin-eyebrow">Overview</span>
+              <h2>Platform snapshot</h2>
+              <p className="admin-muted">
+                Stay on top of activity, inventory, and moderation signals at a
+                glance.
+              </p>
+            </div>
+            <div className="admin-zone-actions">
+              <label className="admin-format">
+                Range
+                <select
+                  value={rangeDays}
+                  onChange={(event) => setRangeDays(Number(event.target.value))}
+                >
+                  <option value={7}>Last 7 days</option>
+                  <option value={14}>Last 14 days</option>
+                  <option value={30}>Last 30 days</option>
+                  <option value={60}>Last 60 days</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <section className="admin-metrics">
           <article className="admin-metric-card">
             <span>Registered Users</span>
             <strong>{formatNumber(overview?.totals?.users)}</strong>
@@ -354,327 +484,613 @@ const AdminDashboard = () => {
             <strong>{formatNumber(overview?.matches?.total || 0)}</strong>
             <small>Pending review</small>
           </article>
-        </section>
+          </section>
 
-        <section className="admin-grid">
-          <div className="admin-panel">
-            <header>
-              <h2>Items Overview</h2>
-              <div className="admin-pill">Live</div>
-            </header>
-            <div className="admin-breakdown">
-              {itemsByType.length === 0 ? (
-                <p className="admin-muted">No item data yet.</p>
-              ) : (
-                itemsByType.map((item) => (
-                  <div key={item._id} className="admin-breakdown-row">
-                    <span>{item._id || "Unspecified"}</span>
-                    <strong>{formatNumber(item.count)}</strong>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="admin-breakdown">
-              {itemsByStatus.length === 0
-                ? null
-                : itemsByStatus.map((item) => (
+          <section className="admin-grid">
+            <div className="admin-panel">
+              <header>
+                <h2>Items Overview</h2>
+                <div className="admin-pill">Live</div>
+              </header>
+              <div className="admin-breakdown">
+                {itemsByType.length === 0 ? (
+                  <p className="admin-muted">No item data yet.</p>
+                ) : (
+                  itemsByType.map((item) => (
                     <div key={item._id} className="admin-breakdown-row">
-                      <span>{item._id || "Unknown"} status</span>
+                      <span>{item._id || "Unspecified"}</span>
                       <strong>{formatNumber(item.count)}</strong>
                     </div>
-                  ))}
-            </div>
-          </div>
-
-          <div className="admin-panel">
-            <header>
-              <h2>Activity Trend</h2>
-              <select
-                value={rangeDays}
-                onChange={(event) => setRangeDays(Number(event.target.value))}
-              >
-                <option value={7}>Last 7 days</option>
-                <option value={14}>Last 14 days</option>
-                <option value={30}>Last 30 days</option>
-                <option value={60}>Last 60 days</option>
-              </select>
-            </header>
-            {loadingSummary ? (
-              <p className="admin-muted">Loading activity...</p>
-            ) : (
-              <div className="admin-chart">
-                {chartData.map((row) => (
-                  <div key={row.date} className="admin-chart-bar">
-                    <div
-                      className="admin-chart-fill"
-                      style={{
-                        height: maxChartValue
-                          ? `${Math.max((row.totalItems / maxChartValue) * 100, 8)}%`
-                          : "8%",
-                      }}
-                    />
-                    <span>{row.date.slice(5)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="admin-chart-legend">
-              <span>Items created per day</span>
-              <strong>
-                {formatNumber(
-                  summary.reduce(
-                    (total, row) => total + (row.totalItems || 0),
-                    0,
-                  ),
+                  ))
                 )}
-              </strong>
+              </div>
+              <div className="admin-breakdown">
+                {itemsByStatus.length === 0
+                  ? null
+                  : itemsByStatus.map((item) => (
+                      <div key={item._id} className="admin-breakdown-row">
+                        <span>{item._id || "Unknown"} status</span>
+                        <strong>{formatNumber(item.count)}</strong>
+                      </div>
+                    ))}
+              </div>
+            </div>
+
+            <div className="admin-panel">
+              <header>
+                <h2>Activity Trend</h2>
+                <span className="admin-muted">Last {rangeDays} days</span>
+              </header>
+              {loadingSummary ? (
+                <p className="admin-muted">Loading activity...</p>
+              ) : (
+                <div className="admin-chart">
+                  {chartData.map((row) => (
+                    <div key={row.date} className="admin-chart-bar">
+                      <div
+                        className="admin-chart-fill"
+                        style={{
+                          height: maxChartValue
+                            ? `${Math.max((row.totalItems / maxChartValue) * 100, 8)}%`
+                            : "8%",
+                        }}
+                      />
+                      <span>{row.date.slice(5)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="admin-chart-legend">
+                <span>Items created per day</span>
+                <strong>
+                  {formatNumber(
+                    summary.reduce(
+                      (total, row) => total + (row.totalItems || 0),
+                      0,
+                    ),
+                  )}
+                </strong>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section id="users" className="admin-zone admin-zone-users">
+          <div className="admin-zone-head">
+            <div>
+              <span className="admin-eyebrow">Users</span>
+              <h2>Access and moderation</h2>
+              <p className="admin-muted">
+                Search accounts, adjust admin access, or lock users who are
+                misusing the platform.
+              </p>
             </div>
           </div>
-        </section>
 
-        <section className="admin-panel admin-recent">
-          <header>
-            <h2>Latest Reports</h2>
-            <span className="admin-muted">
-              Newest reports across the system
-            </span>
-          </header>
-          {loadingOverview ? (
-            <p className="admin-muted">Loading latest items...</p>
-          ) : (
-            <div className="admin-recent-grid">
-              {recentItems.length === 0 ? (
-                <p className="admin-muted">No recent items yet.</p>
-              ) : (
-                recentItems.map((item) => (
-                  <article key={item._id} className="admin-recent-card">
-                    <div>
-                      <h3>{item.title || "Untitled report"}</h3>
-                      <p>
-                        {item.type || "Item"} · {item.category || "General"}
-                      </p>
-                    </div>
-                    <div className="admin-recent-meta">
-                      <span>{item.location || item.zone || "No location"}</span>
-                      <span>
-                        {item.createdAt
-                          ? new Date(item.createdAt).toLocaleDateString()
-                          : ""}
-                      </span>
-                    </div>
-                  </article>
-                ))
-              )}
-            </div>
-          )}
-        </section>
+          <section className="admin-panel admin-access">
+            <header>
+              <h2>User Access</h2>
+              <span className="admin-muted">
+                Manage admin permissions for staff and moderation actions for
+                users.
+              </span>
+            </header>
 
-        <section id="access" className="admin-panel admin-access">
-          <header>
-            <h2>User Access</h2>
-            <span className="admin-muted">
-              Manage admin permissions for staff.
-            </span>
-          </header>
-
-          <div className="admin-access-controls">
-            <div className="admin-access-search">
-              <input
-                type="search"
-                placeholder="Search by name or email"
-                value={userQuery}
-                onChange={(event) => setUserQuery(event.target.value)}
-              />
+            <div className="admin-access-controls">
+              <div className="admin-access-search">
+                <input
+                  type="search"
+                  placeholder="Search by name or email"
+                  value={userQuery}
+                  onChange={(event) => setUserQuery(event.target.value)}
+                />
+                <button
+                  className="admin-primary"
+                  onClick={() => loadUsers(userQuery)}
+                  disabled={loadingUsers}
+                >
+                  {loadingUsers ? "Searching..." : "Search"}
+                </button>
+              </div>
               <button
-                className="admin-primary"
-                onClick={() => loadUsers(userQuery)}
+                className="admin-ghost"
+                onClick={() => {
+                  setUserQuery("");
+                  loadUsers("");
+                }}
                 disabled={loadingUsers}
               >
-                {loadingUsers ? "Searching..." : "Search"}
+                Clear
               </button>
             </div>
-            <button
-              className="admin-ghost"
-              onClick={() => {
-                setUserQuery("");
-                loadUsers("");
-              }}
-              disabled={loadingUsers}
-            >
-              Clear
-            </button>
+
+            {userFeedback ? (
+              <div className="admin-alert">{userFeedback}</div>
+            ) : null}
+
+            {!hasSearched ? (
+              <p className="admin-muted">
+                Search to look up a user by name or email.
+              </p>
+            ) : loadingUsers ? (
+              <p className="admin-muted">Loading users...</p>
+            ) : users.length === 0 ? (
+              <p className="admin-muted">No users found.</p>
+            ) : (
+              <div className="admin-access-list">
+                {users.map((user) => {
+                  const displayName =
+                    `${user.firstName || ""} ${user.lastName || ""}`.trim();
+                  const draftRole = roleDrafts[user.id] || user.role || "user";
+                  const lockLabel = user.accountLocked ? "Unlock" : "Lock";
+                  const lockState = user.accountLocked ? "Locked" : "Active";
+                  return (
+                    <div key={user.id} className="admin-access-row">
+                      <div className="admin-user-info">
+                        <div className="admin-user-title">
+                          <strong>{displayName || "Unnamed user"}</strong>
+                          <span
+                            className={`admin-status-pill ${user.accountLocked ? "is-locked" : "is-active"}`}
+                          >
+                            {lockState}
+                          </span>
+                        </div>
+                        <span className="admin-muted">
+                          {user.email || "No email"}
+                        </span>
+                        {user.accountLocked && user.accountLockReason ? (
+                          <span className="admin-user-note">
+                            {user.accountLockReason}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="admin-access-actions">
+                        <select
+                          value={draftRole}
+                          onChange={(event) =>
+                            setRoleDrafts((current) => ({
+                              ...current,
+                              [user.id]: event.target.value,
+                            }))
+                          }
+                        >
+                          <option value="user">User</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        <button
+                          className="admin-primary"
+                          onClick={() => handleRoleUpdate(user.id)}
+                          disabled={userAction === user.id}
+                        >
+                          {userAction === user.id ? "Updating..." : "Update"}
+                        </button>
+                        <button
+                          className="admin-ghost admin-lock-btn"
+                          onClick={() => {
+                            const locked = !user.accountLocked;
+                            const reason = locked
+                              ? window.prompt(
+                                  `Lock ${displayName || user.email || "this user"}? Add a short reason.`,
+                                  "Misuse of the platform.",
+                                )
+                              : "";
+                            if (locked && reason === null) return;
+                            setUserAction(user.id);
+                            setUserFeedback("");
+                            fetch(
+                              `${API_BASE}/api/admin/users/${user.id}/lock`,
+                              {
+                                method: "PATCH",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  ...buildAuthHeaders(),
+                                },
+                                body: JSON.stringify({
+                                  locked,
+                                  reason: reason || "",
+                                }),
+                              },
+                            )
+                              .then(async (response) => {
+                                if (
+                                  response.status === 401 ||
+                                  response.status === 403
+                                ) {
+                                  throw new Error("auth");
+                                }
+                                const payload = await response
+                                  .json()
+                                  .catch(() => ({}));
+                                if (!response.ok) {
+                                  throw new Error(
+                                    payload.message ||
+                                      "Unable to update account lock.",
+                                  );
+                                }
+                                setUsers((current) =>
+                                  current.map((entry) =>
+                                    entry.id === user.id
+                                      ? payload.user || {
+                                          ...entry,
+                                          accountLocked: locked,
+                                          accountLockReason: reason || "",
+                                        }
+                                      : entry,
+                                  ),
+                                );
+                                setUserFeedback(payload.message);
+                              })
+                              .catch((err) => {
+                                if (err?.message === "auth") {
+                                  setError(
+                                    "Admin access required. Please sign in with an admin account.",
+                                  );
+                                } else {
+                                  setUserFeedback(
+                                    err?.message ||
+                                      "Unable to update account lock right now.",
+                                  );
+                                }
+                              })
+                              .finally(() => {
+                                setUserAction("");
+                              });
+                          }}
+                          disabled={userAction === user.id}
+                        >
+                          {lockLabel}
+                          <span className="material-icons">
+                            {user.accountLocked ? "lock_open" : "lock"}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </section>
+
+        <section id="reports" className="admin-zone admin-zone-reports">
+          <div className="admin-zone-head">
+            <div>
+              <span className="admin-eyebrow">Reports</span>
+              <h2>Exports and recent reports</h2>
+              <p className="admin-muted">
+                Generate audit-ready exports and review the newest entries
+                without scrolling through a heavy dashboard.
+              </p>
+            </div>
           </div>
 
-          {userFeedback ? (
-            <div className="admin-alert">{userFeedback}</div>
-          ) : null}
+          <section className="admin-panel admin-recent">
+            <header>
+              <h2>Latest Reports</h2>
+              <span className="admin-muted">
+                Newest reports across the system
+              </span>
+            </header>
+            {loadingOverview ? (
+              <p className="admin-muted">Loading latest items...</p>
+            ) : (
+              <div className="admin-recent-grid">
+                {recentItems.length === 0 ? (
+                  <p className="admin-muted">No recent items yet.</p>
+                ) : (
+                  recentItems.map((item) => (
+                    <article key={item._id} className="admin-recent-card">
+                      <div>
+                        <h3>{item.title || "Untitled report"}</h3>
+                        <p>
+                          {item.type || "Item"} · {item.category || "General"}
+                        </p>
+                      </div>
+                      <div className="admin-recent-meta">
+                        <span>{item.location || item.zone || "No location"}</span>
+                        <span>
+                          {item.createdAt
+                            ? new Date(item.createdAt).toLocaleDateString()
+                            : ""}
+                        </span>
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
+            )}
+          </section>
 
-          {!hasSearched ? (
-            <p className="admin-muted">
-              Search to look up a user by name or email.
-            </p>
-          ) : loadingUsers ? (
-            <p className="admin-muted">Loading users...</p>
-          ) : users.length === 0 ? (
-            <p className="admin-muted">No users found.</p>
-          ) : (
-            <div className="admin-access-list">
-              {users.map((user) => {
-                const displayName =
-                  `${user.firstName || ""} ${user.lastName || ""}`.trim();
-                const draftRole = roleDrafts[user.id] || user.role || "user";
-                return (
-                  <div key={user.id} className="admin-access-row">
-                    <div>
-                      <strong>{displayName || "Unnamed user"}</strong>
-                      <span className="admin-muted">
-                        {user.email || "No email"}
-                      </span>
-                    </div>
-                    <div className="admin-access-actions">
+          <section className="admin-panel admin-reports">
+            <header>
+              <h2>Reports & Exports</h2>
+              <span className="admin-muted">
+                Generate audit-ready exports for compliance and analytics.
+              </span>
+            </header>
+
+            <div className="admin-report-grid">
+              <div className="admin-report-card">
+                <div>
+                  <h3>Summary Report</h3>
+                  <p>Daily lost & found totals and new user registrations.</p>
+                  <div className="admin-report-controls">
+                    <label>
+                      Format
                       <select
-                        value={draftRole}
+                        value={summaryFormat}
+                        onChange={(event) => setSummaryFormat(event.target.value)}
+                      >
+                        <option value="csv">CSV</option>
+                        <option value="pdf">PDF</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <button
+                  className="admin-primary"
+                  onClick={() => handleDownload("summary")}
+                  disabled={downloading === "summary"}
+                >
+                  {downloading === "summary" ? "Preparing..." : "Download"}
+                  <span className="material-icons">download</span>
+                </button>
+              </div>
+
+              <div className="admin-report-card">
+                <div>
+                  <h3>Items Report</h3>
+                  <p>Export reports with status, location, and metadata.</p>
+                  <div className="admin-report-controls">
+                    <label>
+                      Type
+                      <select
+                        value={itemType}
+                        onChange={(event) => setItemType(event.target.value)}
+                      >
+                        <option value="all">All</option>
+                        <option value="lost">Lost</option>
+                        <option value="found">Found</option>
+                      </select>
+                    </label>
+                    <label>
+                      Range
+                      <select
+                        value={reportDays}
                         onChange={(event) =>
-                          setRoleDrafts((current) => ({
-                            ...current,
-                            [user.id]: event.target.value,
-                          }))
+                          setReportDays(Number(event.target.value))
                         }
                       >
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
+                        <option value={30}>30 days</option>
+                        <option value={90}>90 days</option>
+                        <option value={180}>180 days</option>
+                        <option value={365}>365 days</option>
                       </select>
-                      <button
-                        className="admin-primary"
-                        onClick={() => handleRoleUpdate(user.id)}
-                        disabled={userAction === user.id}
+                    </label>
+                    <label>
+                      Format
+                      <select
+                        value={itemsFormat}
+                        onChange={(event) => setItemsFormat(event.target.value)}
                       >
-                        {userAction === user.id ? "Updating..." : "Update"}
-                      </button>
-                    </div>
+                        <option value="csv">CSV</option>
+                        <option value="pdf">PDF</option>
+                      </select>
+                    </label>
                   </div>
-                );
-              })}
+                </div>
+                <button
+                  className="admin-primary"
+                  onClick={() => handleDownload("items")}
+                  disabled={downloading === "items"}
+                >
+                  {downloading === "items" ? "Preparing..." : "Download"}
+                  <span className="material-icons">download</span>
+                </button>
+              </div>
+
+              <div className="admin-report-card">
+                <div>
+                  <h3>Users Report</h3>
+                  <p>Full roster of registered users for audits.</p>
+                  <div className="admin-report-controls">
+                    <label>
+                      Format
+                      <select
+                        value={usersFormat}
+                        onChange={(event) => setUsersFormat(event.target.value)}
+                      >
+                        <option value="csv">CSV</option>
+                        <option value="pdf">PDF</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <button
+                  className="admin-primary"
+                  onClick={() => handleDownload("users")}
+                  disabled={downloading === "users"}
+                >
+                  {downloading === "users" ? "Preparing..." : "Download"}
+                  <span className="material-icons">download</span>
+                </button>
+              </div>
             </div>
-          )}
+          </section>
         </section>
 
-        <section id="reports" className="admin-panel admin-reports">
-          <header>
-            <h2>Reports & Exports</h2>
-            <span className="admin-muted">
-              Generate audit-ready exports for compliance and analytics.
-            </span>
-          </header>
-
-          <div className="admin-report-grid">
-            <div className="admin-report-card">
-              <div>
-                <h3>Summary Report</h3>
-                <p>Daily lost & found totals and new user registrations.</p>
-                <div className="admin-report-controls">
-                  <label>
-                    Format
-                    <select
-                      value={summaryFormat}
-                      onChange={(event) => setSummaryFormat(event.target.value)}
-                    >
-                      <option value="csv">CSV</option>
-                      <option value="pdf">PDF</option>
-                    </select>
-                  </label>
+        {isCreateModalOpen ? (
+          <div
+            className="admin-modal-backdrop"
+            role="presentation"
+            onClick={() => setIsCreateModalOpen(false)}
+          >
+            <section
+              className="admin-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="admin-create-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <header className="admin-modal-head">
+                <div>
+                  <span className="admin-eyebrow">Quick entry</span>
+                  <h2 id="admin-create-title">Add Item</h2>
+                  <p className="admin-muted">
+                    Create a lost or found report without leaving the dashboard.
+                  </p>
                 </div>
-              </div>
-              <button
-                className="admin-primary"
-                onClick={() => handleDownload("summary")}
-                disabled={downloading === "summary"}
-              >
-                {downloading === "summary" ? "Preparing..." : "Download"}
-                <span className="material-icons">download</span>
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className="admin-modal-close"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  aria-label="Close add item form"
+                >
+                  <span className="material-icons">close</span>
+                </button>
+              </header>
 
-            <div className="admin-report-card">
-              <div>
-                <h3>Items Report</h3>
-                <p>Export reports with status, location, and metadata.</p>
-                <div className="admin-report-controls">
-                  <label>
-                    Type
-                    <select
-                      value={itemType}
-                      onChange={(event) => setItemType(event.target.value)}
-                    >
-                      <option value="all">All</option>
-                      <option value="lost">Lost</option>
-                      <option value="found">Found</option>
-                    </select>
-                  </label>
-                  <label>
-                    Range
-                    <select
-                      value={reportDays}
-                      onChange={(event) =>
-                        setReportDays(Number(event.target.value))
-                      }
-                    >
-                      <option value={30}>30 days</option>
-                      <option value={90}>90 days</option>
-                      <option value={180}>180 days</option>
-                      <option value={365}>365 days</option>
-                    </select>
-                  </label>
-                  <label>
-                    Format
-                    <select
-                      value={itemsFormat}
-                      onChange={(event) => setItemsFormat(event.target.value)}
-                    >
-                      <option value="csv">CSV</option>
-                      <option value="pdf">PDF</option>
-                    </select>
-                  </label>
-                </div>
-              </div>
-              <button
-                className="admin-primary"
-                onClick={() => handleDownload("items")}
-                disabled={downloading === "items"}
-              >
-                {downloading === "items" ? "Preparing..." : "Download"}
-                <span className="material-icons">download</span>
-              </button>
-            </div>
+              <div className="admin-form-grid admin-modal-grid">
+                <label>
+                  Item Type
+                  <select
+                    value={itemTypeDraft}
+                    onChange={(event) => setItemTypeDraft(event.target.value)}
+                  >
+                    <option value="found">Found</option>
+                    <option value="lost">Lost</option>
+                  </select>
+                </label>
 
-            <div className="admin-report-card">
-              <div>
-                <h3>Users Report</h3>
-                <p>Full roster of registered users for audits.</p>
-                <div className="admin-report-controls">
-                  <label>
-                    Format
-                    <select
-                      value={usersFormat}
-                      onChange={(event) => setUsersFormat(event.target.value)}
+                <label>
+                  Title
+                  <input
+                    type="text"
+                    placeholder="e.g., Black Lenovo Laptop"
+                    value={itemTitle}
+                    onChange={(event) => setItemTitle(event.target.value)}
+                  />
+                </label>
+
+                <label>
+                  Category
+                  <select
+                    value={itemCategory}
+                    onChange={(event) => setItemCategory(event.target.value)}
+                  >
+                    <option value="ID or Badge">ID or Badge</option>
+                    <option value="Phone">Phone</option>
+                    <option value="Wallet">Wallet</option>
+                    <option value="Keys">Keys</option>
+                    <option value="Laptop">Laptop</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </label>
+
+                <label>
+                  Campus Zone
+                  <select
+                    value={itemZone}
+                    onChange={(event) => setItemZone(event.target.value)}
+                  >
+                    <option value="Main Library">Main Library</option>
+                    <option value="Hostels">Hostels</option>
+                    <option value="Cafeteria">Cafeteria</option>
+                    <option value="Science Complex">Science Complex</option>
+                  </select>
+                </label>
+
+                <label>
+                  Specific Location
+                  <input
+                    type="text"
+                    placeholder="e.g., Front desk"
+                    value={itemLocation}
+                    onChange={(event) => setItemLocation(event.target.value)}
+                  />
+                </label>
+
+                <label className="admin-form-full">
+                  Description
+                  <textarea
+                    rows="3"
+                    placeholder="Color, brand, identifying marks"
+                    value={itemDescription}
+                    onChange={(event) => setItemDescription(event.target.value)}
+                  />
+                </label>
+
+                <label>
+                  Contact Name
+                  <input
+                    type="text"
+                    value={itemContactName}
+                    onChange={(event) => setItemContactName(event.target.value)}
+                  />
+                </label>
+
+                <label>
+                  Contact Email
+                  <input
+                    type="email"
+                    value={itemContactEmail}
+                    onChange={(event) => setItemContactEmail(event.target.value)}
+                  />
+                </label>
+
+                <label>
+                  Contact Phone
+                  <input
+                    type="tel"
+                    value={itemContactPhone}
+                    onChange={(event) => setItemContactPhone(event.target.value)}
+                  />
+                </label>
+
+                <label className="admin-form-full">
+                  Handover Method
+                  <div className="admin-form-toggle">
+                    <button
+                      type="button"
+                      className={itemHandover === "security" ? "active" : ""}
+                      onClick={() => setItemHandover("security")}
                     >
-                      <option value="csv">CSV</option>
-                      <option value="pdf">PDF</option>
-                    </select>
-                  </label>
-                </div>
+                      Security Office
+                    </button>
+                    <button
+                      type="button"
+                      className={itemHandover === "public" ? "active" : ""}
+                      onClick={() => setItemHandover("public")}
+                    >
+                      Public Meeting
+                    </button>
+                  </div>
+                </label>
               </div>
-              <button
-                className="admin-primary"
-                onClick={() => handleDownload("users")}
-                disabled={downloading === "users"}
-              >
-                {downloading === "users" ? "Preparing..." : "Download"}
-                <span className="material-icons">download</span>
-              </button>
-            </div>
+
+              {itemFeedback ? <div className="admin-alert">{itemFeedback}</div> : null}
+
+              <div className="admin-modal-actions">
+                <button
+                  type="button"
+                  className="admin-ghost"
+                  onClick={() => setIsCreateModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="admin-primary"
+                  type="button"
+                  onClick={handleCreateItem}
+                  disabled={itemSubmitting}
+                >
+                  {itemSubmitting ? "Adding..." : "Add Item"}
+                  <span className="material-icons">add</span>
+                </button>
+              </div>
+            </section>
           </div>
-        </section>
+        ) : null}
       </main>
     </div>
   );

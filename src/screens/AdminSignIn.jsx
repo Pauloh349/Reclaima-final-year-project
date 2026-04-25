@@ -210,7 +210,7 @@ const AdminSignIn = () => {
             <Link to="/terms">Terms of Service</Link>
             <Link to="/help">Help Center</Link>
           </div>
-          <p>� 2026 Reclaima University Platform</p>
+          <p>© 2026 Reclaima University Platform</p>
         </footer>
       </main>
     </div>

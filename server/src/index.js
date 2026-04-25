@@ -2,8 +2,6 @@ import app from "./app.js";
 import { env } from "./config/env.js";
 import { closeDatabaseConnection, connectToDatabase } from "./db/client.js";
 
-console.log(closeDatabaseConnection);
-
 let server;
 
 async function startServer() {

@@ -12,6 +12,7 @@ import ProfileSettings from "../screens/Profile";
 import ChatPage from "../screens/Chat";
 import ChatInbox from "../screens/ChatInbox";
 import SignIn from "../screens/SignIn";
+import ResetPassword from "../screens/ResetPassword";
 import AdminSignIn from "../screens/AdminSignIn";
 import PrivacyPolicy from "../screens/PrivacyPolicy";
 import TermsOfService from "../screens/TermsOfService";
@@ -27,6 +28,9 @@ const ProtectedRoute = ({ children }) => {
   if (!user) {
     return <Navigate to="/signin" replace />;
   }
+  if (user.accountLocked) {
+    return <Navigate to="/signin" replace />;
+  }
   if (user.emailVerified === false) {
     return <Navigate to="/verify-email" replace />;
   }
@@ -36,6 +40,9 @@ const ProtectedRoute = ({ children }) => {
 const PublicRoute = ({ children }) => {
   const user = useAuthUser();
   if (user) {
+    if (user.accountLocked) {
+      return <Navigate to="/signin" replace />;
+    }
     if (user.emailVerified === false) {
       return <Navigate to="/verify-email" replace />;
     }
@@ -48,6 +55,9 @@ const PublicRoute = ({ children }) => {
 const AdminRoute = ({ children }) => {
   const user = useAuthUser();
   if (!user) {
+    return <Navigate to="/admin/signin" replace />;
+  }
+  if (user.accountLocked) {
     return <Navigate to="/admin/signin" replace />;
   }
   const isAdmin = user.role === "admin";
@@ -78,6 +88,7 @@ const AppRouter = () => {
             </PublicRoute>
           }
         />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route
           path="/admin/signin"

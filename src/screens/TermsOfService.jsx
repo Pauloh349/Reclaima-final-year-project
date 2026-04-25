@@ -8,10 +8,6 @@ const TermsOfService = () => {
     <div className="legal-page">
       <NavBar
         icon="gavel"
-        links={[
-          { label: "Dashboard", to: "/home" },
-          { label: "Sign In", to: "/signin" },
-        ]}
         rightContent={
           <>
             <UserBadge />

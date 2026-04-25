@@ -1,8 +1,8 @@
 import PDFDocument from "pdfkit";
 import { Router } from "express";
 import { ObjectId } from "mongodb";
-
 import { getDatabase } from "../db/client.js";
+import { sendAccountStatusEmail } from "../services/email.js";
 
 const adminRouter = Router();
 const USERS_COLLECTION = "users";
@@ -28,6 +28,14 @@ async function requireAdmin(req, res, next) {
     if (!adminUser) {
       return res.status(401).json({
         message: "Invalid or expired session.",
+      });
+    }
+
+    if (adminUser.accountLocked) {
+      return res.status(423).json({
+        message:
+          "This account is locked. Check your email for the detailed notice and appeal steps.",
+        accountLocked: true,
       });
     }
 
@@ -69,6 +77,21 @@ function clampLimit(value, fallback = 25) {
 
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildUserAdminPayload(user) {
+  return {
+    id: user._id?.toString?.() || String(user._id),
+    firstName: user.firstName || "",
+    lastName: user.lastName || "",
+    email: user.email || "",
+    role: user.role || "user",
+    createdAt: user.createdAt || "",
+    accountLocked: user.accountLocked === true,
+    accountLockReason: user.accountLockReason || "",
+    accountLockedAt: user.accountLockedAt || "",
+    accountLockedBy: user.accountLockedBy || "",
+  };
 }
 
 function isoDateDaysAgo(days) {
@@ -170,7 +193,7 @@ function drawFooter(doc) {
 }
 
 function drawHeader(doc, title, metaLines = [], options = {}) {
-  const { left, top, right } = doc.page.margins;
+  const { left, right } = doc.page.margins;
   const compact = Boolean(options.compact);
   const pageWidth = doc.page.width;
   const headerHeight = compact ? 58 : 86;
@@ -697,18 +720,21 @@ adminRouter.get("/users", async (req, res) => {
       .find(filter)
       .sort({ createdAt: -1 })
       .limit(limit)
-      .project({ firstName: 1, lastName: 1, email: 1, role: 1, createdAt: 1 })
+      .project({
+        firstName: 1,
+        lastName: 1,
+        email: 1,
+        role: 1,
+        createdAt: 1,
+        accountLocked: 1,
+        accountLockReason: 1,
+        accountLockedAt: 1,
+        accountLockedBy: 1,
+      })
       .toArray();
 
     res.status(200).json({
-      users: users.map((user) => ({
-        id: user._id?.toString?.() || String(user._id),
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        email: user.email || "",
-        role: user.role || "user",
-        createdAt: user.createdAt || "",
-      })),
+      users: users.map((user) => buildUserAdminPayload(user)),
     });
   } catch (error) {
     console.error("Admin users error:", error);
@@ -749,18 +775,106 @@ adminRouter.patch("/users/:id/role", async (req, res) => {
 
     return res.status(200).json({
       message: "Role updated successfully.",
-      user: {
-        id: result.value._id?.toString?.() || String(result.value._id),
-        firstName: result.value.firstName || "",
-        lastName: result.value.lastName || "",
-        email: result.value.email || "",
-        role: result.value.role || "user",
-      },
+      user: buildUserAdminPayload(result.value),
     });
   } catch (error) {
     console.error("Admin role update error:", error);
     return res.status(500).json({
       message: "Unable to update role right now.",
+    });
+  }
+});
+
+adminRouter.patch("/users/:id/lock", async (req, res) => {
+  try {
+    const id = String(req.params?.id || "");
+    const locked = Boolean(req.body?.locked);
+    const reason = String(req.body?.reason || "").trim();
+    const db = getDatabase();
+    const usersCollection = db.collection(USERS_COLLECTION);
+
+    const filter = ObjectId.isValid(id)
+      ? { $or: [{ _id: new ObjectId(id) }, { _id: id }] }
+      : { _id: id };
+
+    const now = new Date().toISOString();
+    const update = locked
+      ? {
+          $set: {
+            accountLocked: true,
+            accountLockReason: reason || "Misuse of the platform.",
+            accountLockedAt: now,
+            accountLockedBy: req.adminUser?.email || "",
+            updatedAt: now,
+          },
+        }
+      : {
+          $set: {
+            accountLocked: false,
+            updatedAt: now,
+          },
+          $unset: {
+            accountLockReason: "",
+            accountLockedAt: "",
+            accountLockedBy: "",
+            accountLockNotificationSentAt: "",
+          },
+        };
+
+    const result = await usersCollection.findOneAndUpdate(filter, update, {
+      returnDocument: "after",
+    });
+
+    if (!result.value) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
+
+    let emailSent = false;
+    try {
+      await sendAccountStatusEmail({
+        to: result.value.email,
+        firstName: result.value.firstName,
+        locked,
+        reason: locked
+          ? result.value.accountLockReason || reason || "Misuse of the platform."
+          : "Account restored by moderation review.",
+        lockedAt: locked
+          ? result.value.accountLockedAt || now
+          : result.value.updatedAt || now,
+        adminEmail: req.adminUser?.email || "",
+      });
+      emailSent = true;
+      if (locked) {
+        await usersCollection.updateOne(
+          { _id: result.value._id },
+          {
+            $set: {
+              accountLockNotificationSentAt: now,
+              updatedAt: now,
+            },
+          },
+        );
+      }
+    } catch (error) {
+      console.error("Account status email error:", error);
+    }
+
+    return res.status(200).json({
+      message: locked
+        ? "Account locked successfully."
+        : "Account unlocked successfully.",
+      user: buildUserAdminPayload(result.value),
+      emailSent,
+      emailMessage: emailSent
+        ? "Account status email sent successfully."
+        : "The account was updated, but the email could not be sent.",
+    });
+  } catch (error) {
+    console.error("Admin lock update error:", error);
+    return res.status(500).json({
+      message: "Unable to update account lock right now.",
     });
   }
 });

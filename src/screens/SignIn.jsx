@@ -203,6 +203,9 @@ const SignIn = () => {
             <p>
               New to Reclaima? <Link to="/signup">Create an account</Link>
             </p>
+            <p>
+              Forgot your password? <Link to="/reset-password">Reset it here</Link>
+            </p>
           </footer>
         </section>
 
