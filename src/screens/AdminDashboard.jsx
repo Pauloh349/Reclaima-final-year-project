@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import UserBadge from "../components/UserBadge";
@@ -77,15 +77,10 @@ const AdminDashboard = () => {
   const adminUser = useAuthUser();
   const adminDisplayName = getUserDisplayName(adminUser);
   const [overview, setOverview] = useState(null);
-  const [summary, setSummary] = useState([]);
-  const [rangeDays, setRangeDays] = useState(30);
   const [reportDays, setReportDays] = useState(90);
   const [itemType, setItemType] = useState("all");
-  const [summaryFormat, setSummaryFormat] = useState("csv");
-  const [itemsFormat, setItemsFormat] = useState("csv");
   const [usersFormat, setUsersFormat] = useState("csv");
   const [loadingOverview, setLoadingOverview] = useState(true);
-  const [loadingSummary, setLoadingSummary] = useState(true);
   const [users, setUsers] = useState([]);
   const [userQuery, setUserQuery] = useState("");
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -139,32 +134,6 @@ const AdminDashboard = () => {
       mounted = false;
     };
   }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    setLoadingSummary(true);
-    fetchJson(`/api/admin/reports/summary?days=${rangeDays}`)
-      .then((data) => {
-        if (mounted) setSummary(data.rows || []);
-      })
-      .catch((err) => {
-        if (!mounted) return;
-        if (err?.message === "auth") {
-          setError(
-            "Admin access required. Please sign in with an admin account.",
-          );
-          return;
-        }
-        setError("Unable to load activity summary.");
-      })
-      .finally(() => {
-        if (mounted) setLoadingSummary(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [rangeDays]);
 
   const loadUsers = async (query = "") => {
     setHasSearched(true);
@@ -292,18 +261,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const chartData = useMemo(() => {
-    if (!summary.length) return [];
-    return summary.slice(-14);
-  }, [summary]);
-
-  const maxChartValue = useMemo(() => {
-    return chartData.reduce(
-      (max, row) => Math.max(max, row.totalItems || 0),
-      0,
-    );
-  }, [chartData]);
-
   const itemsByType = overview?.itemsByType || [];
   const itemsByStatus = overview?.itemsByStatus || [];
   const recentItems = overview?.recentItems || [];
@@ -311,16 +268,10 @@ const AdminDashboard = () => {
   const handleDownload = async (kind) => {
     try {
       setDownloading(kind);
-      if (kind === "summary") {
-        await downloadReport(
-          `/api/admin/reports/summary?days=${rangeDays}&format=${summaryFormat}`,
-          `reclaima-summary-${rangeDays}d.${summaryFormat}`,
-        );
-      }
       if (kind === "items") {
         await downloadReport(
-          `/api/admin/reports/items?days=${reportDays}&type=${itemType}&format=${itemsFormat}`,
-          `reclaima-items-${itemType}-${reportDays}d.${itemsFormat}`,
+          `/api/admin/reports/items?days=${reportDays}&type=${itemType}&format=csv`,
+          `reclaima-items-${itemType}-${reportDays}d.csv`,
         );
       }
       if (kind === "users") {
@@ -373,26 +324,6 @@ const AdminDashboard = () => {
               team, and generate compliance-ready exports.
             </p>
             <div className="admin-hero-actions">
-              <label className="admin-format">
-                Format
-                <select
-                  value={summaryFormat}
-                  onChange={(event) => setSummaryFormat(event.target.value)}
-                >
-                  <option value="csv">CSV</option>
-                  <option value="pdf">PDF</option>
-                </select>
-              </label>
-              <button
-                className="admin-primary"
-                onClick={() => handleDownload("summary")}
-                disabled={downloading === "summary"}
-              >
-                {downloading === "summary"
-                  ? "Preparing..."
-                  : "Download Summary"}
-                <span className="material-icons">download</span>
-              </button>
               <a className="admin-ghost" href="#reports">
                 View Reports
               </a>
@@ -437,53 +368,39 @@ const AdminDashboard = () => {
                 glance.
               </p>
             </div>
-            <div className="admin-zone-actions">
-              <label className="admin-format">
-                Range
-                <select
-                  value={rangeDays}
-                  onChange={(event) => setRangeDays(Number(event.target.value))}
-                >
-                  <option value={7}>Last 7 days</option>
-                  <option value={14}>Last 14 days</option>
-                  <option value={30}>Last 30 days</option>
-                  <option value={60}>Last 60 days</option>
-                </select>
-              </label>
-            </div>
           </div>
 
           <section className="admin-metrics">
-          <article className="admin-metric-card">
-            <span>Registered Users</span>
-            <strong>{formatNumber(overview?.totals?.users)}</strong>
-            <small>
-              {formatNumber(overview?.activity?.newUsersLast30Days)} new in 30
-              days
-            </small>
-          </article>
-          <article className="admin-metric-card">
-            <span>Total Reports</span>
-            <strong>{formatNumber(overview?.totals?.items)}</strong>
-            <small>
-              {formatNumber(overview?.activity?.newItemsLast7Days)} new in 7
-              days
-            </small>
-          </article>
-          <article className="admin-metric-card">
-            <span>Open Cases</span>
-            <strong>
-              {formatNumber(
-                itemsByStatus.find((item) => item._id === "open")?.count || 0,
-              )}
-            </strong>
-            <small>Resolution queue</small>
-          </article>
-          <article className="admin-metric-card">
-            <span>Smart Matches</span>
-            <strong>{formatNumber(overview?.matches?.total || 0)}</strong>
-            <small>Pending review</small>
-          </article>
+            <article className="admin-metric-card">
+              <span>Registered Users</span>
+              <strong>{formatNumber(overview?.totals?.users)}</strong>
+              <small>
+                {formatNumber(overview?.activity?.newUsersLast30Days)} new in 30
+                days
+              </small>
+            </article>
+            <article className="admin-metric-card">
+              <span>Total Reports</span>
+              <strong>{formatNumber(overview?.totals?.items)}</strong>
+              <small>
+                {formatNumber(overview?.activity?.newItemsLast7Days)} new in 7
+                days
+              </small>
+            </article>
+            <article className="admin-metric-card">
+              <span>Open Cases</span>
+              <strong>
+                {formatNumber(
+                  itemsByStatus.find((item) => item._id === "open")?.count || 0,
+                )}
+              </strong>
+              <small>Resolution queue</small>
+            </article>
+            <article className="admin-metric-card">
+              <span>Smart Matches</span>
+              <strong>{formatNumber(overview?.matches?.total || 0)}</strong>
+              <small>Pending review</small>
+            </article>
           </section>
 
           <section className="admin-grid">
@@ -518,38 +435,26 @@ const AdminDashboard = () => {
 
             <div className="admin-panel">
               <header>
-                <h2>Activity Trend</h2>
-                <span className="admin-muted">Last {rangeDays} days</span>
+                <h2>Quick Activity</h2>
+                <span className="admin-muted">Recent system signals</span>
               </header>
-              {loadingSummary ? (
-                <p className="admin-muted">Loading activity...</p>
-              ) : (
-                <div className="admin-chart">
-                  {chartData.map((row) => (
-                    <div key={row.date} className="admin-chart-bar">
-                      <div
-                        className="admin-chart-fill"
-                        style={{
-                          height: maxChartValue
-                            ? `${Math.max((row.totalItems / maxChartValue) * 100, 8)}%`
-                            : "8%",
-                        }}
-                      />
-                      <span>{row.date.slice(5)}</span>
-                    </div>
-                  ))}
+              <div className="admin-breakdown">
+                <div className="admin-breakdown-row">
+                  <span>New users in 30 days</span>
+                  <strong>
+                    {formatNumber(overview?.activity?.newUsersLast30Days)}
+                  </strong>
                 </div>
-              )}
-              <div className="admin-chart-legend">
-                <span>Items created per day</span>
-                <strong>
-                  {formatNumber(
-                    summary.reduce(
-                      (total, row) => total + (row.totalItems || 0),
-                      0,
-                    ),
-                  )}
-                </strong>
+                <div className="admin-breakdown-row">
+                  <span>New items in 7 days</span>
+                  <strong>
+                    {formatNumber(overview?.activity?.newItemsLast7Days)}
+                  </strong>
+                </div>
+                <div className="admin-breakdown-row">
+                  <span>Recent reports</span>
+                  <strong>{formatNumber(recentItems.length)}</strong>
+                </div>
               </div>
             </div>
           </section>
@@ -628,7 +533,15 @@ const AdminDashboard = () => {
                     <div key={user.id} className="admin-access-row">
                       <div className="admin-user-info">
                         <div className="admin-user-title">
-                          <strong>{displayName || "Unnamed user"}</strong>
+                          <strong
+                            className={
+                              user.accountLocked
+                                ? "admin-user-name is-locked"
+                                : "admin-user-name"
+                            }
+                          >
+                            {displayName || "Unnamed user"}
+                          </strong>
                           <span
                             className={`admin-status-pill ${user.accountLocked ? "is-locked" : "is-active"}`}
                           >
@@ -739,9 +652,6 @@ const AdminDashboard = () => {
                           disabled={userAction === user.id}
                         >
                           {lockLabel}
-                          <span className="material-icons">
-                            {user.accountLocked ? "lock_open" : "lock"}
-                          </span>
                         </button>
                       </div>
                     </div>
@@ -787,7 +697,9 @@ const AdminDashboard = () => {
                         </p>
                       </div>
                       <div className="admin-recent-meta">
-                        <span>{item.location || item.zone || "No location"}</span>
+                        <span>
+                          {item.location || item.zone || "No location"}
+                        </span>
                         <span>
                           {item.createdAt
                             ? new Date(item.createdAt).toLocaleDateString()
@@ -810,33 +722,6 @@ const AdminDashboard = () => {
             </header>
 
             <div className="admin-report-grid">
-              <div className="admin-report-card">
-                <div>
-                  <h3>Summary Report</h3>
-                  <p>Daily lost & found totals and new user registrations.</p>
-                  <div className="admin-report-controls">
-                    <label>
-                      Format
-                      <select
-                        value={summaryFormat}
-                        onChange={(event) => setSummaryFormat(event.target.value)}
-                      >
-                        <option value="csv">CSV</option>
-                        <option value="pdf">PDF</option>
-                      </select>
-                    </label>
-                  </div>
-                </div>
-                <button
-                  className="admin-primary"
-                  onClick={() => handleDownload("summary")}
-                  disabled={downloading === "summary"}
-                >
-                  {downloading === "summary" ? "Preparing..." : "Download"}
-                  <span className="material-icons">download</span>
-                </button>
-              </div>
-
               <div className="admin-report-card">
                 <div>
                   <h3>Items Report</h3>
@@ -865,16 +750,6 @@ const AdminDashboard = () => {
                         <option value={90}>90 days</option>
                         <option value={180}>180 days</option>
                         <option value={365}>365 days</option>
-                      </select>
-                    </label>
-                    <label>
-                      Format
-                      <select
-                        value={itemsFormat}
-                        onChange={(event) => setItemsFormat(event.target.value)}
-                      >
-                        <option value="csv">CSV</option>
-                        <option value="pdf">PDF</option>
                       </select>
                     </label>
                   </div>
@@ -1034,7 +909,9 @@ const AdminDashboard = () => {
                   <input
                     type="email"
                     value={itemContactEmail}
-                    onChange={(event) => setItemContactEmail(event.target.value)}
+                    onChange={(event) =>
+                      setItemContactEmail(event.target.value)
+                    }
                   />
                 </label>
 
@@ -1043,7 +920,9 @@ const AdminDashboard = () => {
                   <input
                     type="tel"
                     value={itemContactPhone}
-                    onChange={(event) => setItemContactPhone(event.target.value)}
+                    onChange={(event) =>
+                      setItemContactPhone(event.target.value)
+                    }
                   />
                 </label>
 
@@ -1068,7 +947,9 @@ const AdminDashboard = () => {
                 </label>
               </div>
 
-              {itemFeedback ? <div className="admin-alert">{itemFeedback}</div> : null}
+              {itemFeedback ? (
+                <div className="admin-alert">{itemFeedback}</div>
+              ) : null}
 
               <div className="admin-modal-actions">
                 <button

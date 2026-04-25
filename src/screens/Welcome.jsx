@@ -12,8 +12,6 @@ function Welcome() {
         links={[
           { label: "How it works", to: "/how-it-works" },
           { kind: "divider" },
-          { label: "Sign In", to: "/signin", className: "signin" },
-          { label: "Sign Up", to: "/signup", className: "signin" },
         ]}
         rightContent={
           <>
@@ -128,4 +126,3 @@ function Welcome() {
 }
 
 export default Welcome;
-

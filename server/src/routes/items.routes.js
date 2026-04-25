@@ -436,6 +436,9 @@ itemsRouter.patch("/:id/status", async (req, res) => {
   try {
     const rawId = String(req.params?.id || "").trim();
     const status = String(req.body?.status || "").trim();
+    const returnMethod = String(req.body?.returnMethod || "").trim();
+    const returnedBy = String(req.body?.returnedBy || "").trim();
+    const returnedNote = String(req.body?.returnedNote || "").trim();
 
     if (!rawId) {
       return res.status(400).json({
@@ -457,9 +460,45 @@ itemsRouter.patch("/:id/status", async (req, res) => {
 
     const collection = await getItemsCollection();
     const now = new Date().toISOString();
+    const update = {
+      status,
+      updatedAt: now,
+    };
+
+    if (status === "returned") {
+      update.returnedAt = now;
+      update.returnMethod = returnMethod || undefined;
+      update.returnedBy = returnedBy || undefined;
+      update.returnedNote = returnedNote || undefined;
+    } else {
+      update.$unset = {
+        returnedAt: "",
+        returnMethod: "",
+        returnedBy: "",
+        returnedNote: "",
+      };
+    }
+
     const result = await collection.findOneAndUpdate(
       { _id: new ObjectId(rawId) },
-      { $set: { status, updatedAt: now } },
+      status === "returned"
+        ? {
+            $set: Object.fromEntries(
+              Object.entries(update).filter(([, value]) => value !== undefined),
+            ),
+          }
+        : {
+            $set: {
+              status,
+              updatedAt: now,
+            },
+            $unset: {
+              returnedAt: "",
+              returnMethod: "",
+              returnedBy: "",
+              returnedNote: "",
+            },
+          },
       { returnDocument: "after" },
     );
 

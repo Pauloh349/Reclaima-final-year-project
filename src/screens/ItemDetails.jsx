@@ -67,12 +67,16 @@ export default function ItemDetails() {
     setUpdateMessage("");
 
     try {
+      const returnMethod = item?.handoverMethod || "";
       const response = await fetch(`${API_BASE}/api/items/${id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "returned" }),
+        body: JSON.stringify({
+          status: "returned",
+          returnMethod,
+        }),
       });
 
       const payload = await response.json().catch(() => ({}));

@@ -15,7 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (_req, res) => {
-  res.status(200).json({ message: "Reclaima API is running." });
+  res.status(200).json({ message: "API is running." });
 });
 
 app.use("/api/health", healthRouter);

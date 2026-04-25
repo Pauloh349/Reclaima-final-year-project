@@ -575,6 +575,20 @@
   color: #1d2b26;
 }
 
+.admin-user-name {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #f6f3ec;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.admin-user-name.is-locked {
+  background: #ffe7e3;
+  color: #9f2d23;
+}
+
 .admin-user-note {
   color: #8e5b10;
   font-size: 0.85rem;
@@ -619,6 +633,16 @@
 
 .admin-lock-btn {
   border-style: solid;
+  gap: 0;
+  background: #fff4f2;
+  border-color: #f2c2bb;
+  color: #b24336;
+}
+
+.admin-lock-btn:hover {
+  background: #ffeae6;
+  border-color: #e7ada3;
+  color: #9f2d23;
 }
 
 @media (max-width: 720px) {

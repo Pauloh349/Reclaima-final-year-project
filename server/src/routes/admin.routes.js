@@ -101,13 +101,6 @@ function isoDateDaysAgo(days) {
   return start.toISOString();
 }
 
-function dateKeyFromIso(isoString) {
-  if (!isoString) return null;
-  const parsed = new Date(isoString);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed.toISOString().slice(0, 10);
-}
-
 function buildDateRange(days) {
   const end = new Date();
   end.setUTCHours(23, 59, 59, 999);
@@ -168,7 +161,7 @@ function drawLogo(doc, x, y) {
 
 function drawFooter(doc) {
   const { left, right, bottom } = doc.page.margins;
-  const footerY = doc.page.height - bottom + 16;
+  const footerY = doc.page.height - bottom - 8;
   const contentWidth = doc.page.width - left - right;
   const pageNumber = doc.page.number || 1;
 
@@ -192,12 +185,12 @@ function drawFooter(doc) {
   doc.restore();
 }
 
-function drawHeader(doc, title, metaLines = [], options = {}) {
+function drawReportPageHeader(doc, title, metaLines = [], options = {}) {
   const { left, right } = doc.page.margins;
-  const compact = Boolean(options.compact);
   const pageWidth = doc.page.width;
-  const headerHeight = compact ? 58 : 86;
   const contentWidth = pageWidth - left - right;
+  const compact = Boolean(options.compact);
+  const headerHeight = compact ? 58 : 92;
   const generatedLine = metaLines.find((line) =>
     String(line).toLowerCase().startsWith("generated:"),
   );
@@ -227,10 +220,10 @@ function drawHeader(doc, title, metaLines = [], options = {}) {
 
   doc.fillColor("#1d2b26").font("Helvetica-Bold").fontSize(compact ? 14 : 18);
   doc.text(title, left, cursorY);
-  cursorY += compact ? 18 : 24;
+  cursorY += compact ? 12 : 18;
 
   if (!compact && metaLines.length) {
-    const metaBoxY = cursorY + 2;
+    const metaBoxY = cursorY + 4;
     const rows = Math.ceil(metaLines.length / 2);
     const metaBoxHeight = rows * 14 + 18;
 
@@ -252,108 +245,12 @@ function drawHeader(doc, title, metaLines = [], options = {}) {
     cursorY = metaBoxY + metaBoxHeight + 10;
   }
 
-  doc
-    .moveTo(left, cursorY)
-    .lineTo(pageWidth - right, cursorY)
-    .lineWidth(1)
-    .strokeColor("#e6dfd6")
-    .stroke();
-
-  return cursorY + 12;
+  return cursorY;
 }
 
-function drawTable(doc, startY, columns, rows, options = {}) {
-  const { left, right, bottom } = doc.page.margins;
-  const pageWidth = doc.page.width - left - right;
-  const rowHeight = 22;
-  const headerHeight = 24;
-  const footerSpace = 28;
-  const maxY = doc.page.height - bottom - footerSpace;
-  const title = options.title || "";
-  const metaLines = options.metaLines || [];
-
-  const columnWidths = columns.map((col) => Math.floor(pageWidth * col.width));
-
-  function drawHeaderRow(y) {
-    doc.rect(left, y, pageWidth, headerHeight).fill("#1d2b26");
-    doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(10);
-
-    let x = left + 8;
-    columns.forEach((col, index) => {
-      doc.text(col.label, x, y + 7, {
-        width: columnWidths[index] - 12,
-        height: headerHeight - 10,
-        align: "left",
-        lineBreak: false,
-        ellipsis: true,
-      });
-      x += columnWidths[index];
-    });
-
-    return y + headerHeight;
-  }
-
-  if (!rows.length) {
-    drawHeaderRow(startY);
-    drawFooter(doc);
-    return startY + headerHeight;
-  }
-
-  let index = 0;
-  let pageStartY = startY;
-
-  while (index < rows.length) {
-    const rowsPerPage = Math.max(
-      1,
-      Math.floor((maxY - pageStartY - headerHeight) / rowHeight),
-    );
-
-    let currentY = drawHeaderRow(pageStartY);
-    doc.font("Helvetica").fontSize(9).fillColor("#1d2b26");
-
-    let rowsOnPage = 0;
-    while (rowsOnPage < rowsPerPage && index < rows.length) {
-      const row = rows[index];
-
-      if (rowsOnPage % 2 === 0) {
-        doc.rect(left, currentY, pageWidth, rowHeight).fill("#fbfaf7");
-        doc.fillColor("#1d2b26");
-      }
-
-      let x = left + 8;
-      columns.forEach((col, colIndex) => {
-        const value = row?.[col.key] ?? "";
-        doc.text(String(value), x, currentY + 6, {
-          width: columnWidths[colIndex] - 12,
-          height: rowHeight - 8,
-          align: "left",
-          lineBreak: false,
-          ellipsis: true,
-        });
-        x += columnWidths[colIndex];
-      });
-
-      doc
-        .strokeColor("#efe8dd")
-        .lineWidth(0.5)
-        .moveTo(left, currentY + rowHeight)
-        .lineTo(left + pageWidth, currentY + rowHeight)
-        .stroke();
-
-      currentY += rowHeight;
-      index += 1;
-      rowsOnPage += 1;
-    }
-
-    drawFooter(doc);
-
-    if (index < rows.length) {
-      doc.addPage();
-      pageStartY = drawHeader(doc, title, metaLines, { compact: true });
-    }
-  }
-
-  return pageStartY;
+function startReportPage(doc, title, metaLines, options = {}) {
+  const cursorY = drawReportPageHeader(doc, title, metaLines, options);
+  return cursorY;
 }
 
 function sendPdf(res, filename, title, metaLines, columns, rows) {
@@ -366,10 +263,331 @@ function sendPdf(res, filename, title, metaLines, columns, rows) {
 
   doc.pipe(res);
 
-  const tableStartY = drawHeader(doc, title, metaLines);
-  drawTable(doc, tableStartY, columns, rows, { title, metaLines });
+  const { left, right, bottom } = doc.page.margins;
+  const pageWidth = doc.page.width - left - right;
+  const contentBottom = doc.page.height - bottom;
+  const titleStartY = startReportPage(doc, title, metaLines);
+  const rowGap = 10;
+  const rowBoxPadding = 10;
+  const headerRowHeight = 24;
+
+  doc.y = titleStartY;
+  doc.x = left;
+
+  function checkPageSpace(requiredHeight, label = "content") {
+    if (doc.y + requiredHeight <= contentBottom) {
+      return false;
+    }
+
+    drawFooter(doc);
+    console.log(`[PDF] addPage for ${label}`);
+    doc.addPage();
+    doc.y = startReportPage(doc, title, metaLines, { compact: true });
+    doc.x = left;
+    return true;
+  }
+
+  if (rows.length === 0) {
+    doc.font("Helvetica").fontSize(10).fillColor("#51605a");
+    doc.text("No records available for this report.", left, doc.y + 10);
+    drawFooter(doc);
+    doc.end();
+    return;
+  }
+
+  checkPageSpace(headerRowHeight + 8, "table header");
+  const headerTop = doc.y + 4;
+  doc.rect(left, headerTop, pageWidth, headerRowHeight).fill("#1d2b26");
+  doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(10);
+  let colX = left + 8;
+  columns.forEach((col) => {
+    const width = Math.floor(pageWidth * col.width);
+    doc.text(col.label, colX, headerTop + 7, {
+      width: width - 12,
+      lineBreak: false,
+      ellipsis: true,
+    });
+    colX += width;
+  });
+  doc.y = headerTop + headerRowHeight + 10;
+
+  rows.forEach((row, rowIndex) => {
+    const values = columns.map((col) => String(row?.[col.key] ?? ""));
+    const rowHeight = Math.max(
+      32,
+      values.reduce((max, value, index) => {
+        const width = Math.floor(pageWidth * columns[index].width) - 12;
+        const height = doc.heightOfString(value, { width, align: "left" });
+        return Math.max(max, height);
+      }, 0) + rowBoxPadding * 2,
+    );
+
+    checkPageSpace(rowHeight + rowGap, `row ${rowIndex + 1}`);
+
+    const rowTop = doc.y;
+
+    if (rowIndex % 2 === 0) {
+      doc.save();
+      doc.roundedRect(left, rowTop, pageWidth, rowHeight, 8).fill("#fbfaf7");
+      doc.restore();
+    }
+
+    let x = left + 8;
+    values.forEach((value, index) => {
+      const width = Math.floor(pageWidth * columns[index].width) - 12;
+      doc.fillColor("#1d2b26").font("Helvetica").fontSize(9);
+      doc.text(value, x, rowTop + rowBoxPadding, {
+        width,
+        align: "left",
+        height: rowHeight - rowBoxPadding * 2,
+        lineBreak: false,
+        ellipsis: true,
+      });
+      x += Math.floor(pageWidth * columns[index].width);
+    });
+
+    doc
+      .strokeColor("#efe8dd")
+      .lineWidth(0.5)
+      .moveTo(left, rowTop + rowHeight)
+      .lineTo(left + pageWidth, rowTop + rowHeight)
+      .stroke();
+
+    doc.y = rowTop + rowHeight + rowGap;
+    doc.x = left;
+  });
+
   drawFooter(doc);
 
+  doc.end();
+}
+
+function _sendItemsReportPdf(res, filename, title, metaLines, rows) {
+  const doc = new PDFDocument({
+    margin: 42,
+    size: "A4",
+    layout: "landscape",
+  });
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${filename}"`,
+  );
+
+  doc.pipe(res);
+
+  const { left, right, bottom } = doc.page.margins;
+  const pageWidth = doc.page.width - left - right;
+  const contentBottom = doc.page.height - bottom;
+  const titleStartY = startReportPage(doc, title, metaLines);
+  const cardGap = 12;
+  const cardPadding = 12;
+  const rowGap = 14;
+  const columnGap = 12;
+  const cardWidth = Math.floor((pageWidth - columnGap) / 2);
+  const pillWidth = 74;
+  const fieldGroupWidth = Math.floor((cardWidth - cardPadding * 2 - columnGap) / 2);
+
+  const leftFields = [
+    { label: "Reporter type", key: "reporterLabel" },
+    { label: "Reporter", key: "reporterName" },
+    { label: "Email", key: "reporterEmail" },
+  ];
+
+  const rightFields = [
+    { label: "Type", key: "type" },
+    { label: "Category", key: "category" },
+    { label: "Location", key: "location" },
+    { label: "Zone", key: "zone" },
+    { label: "Status", key: "status" },
+    { label: "Returned", key: "returned" },
+    { label: "Return method", key: "returnMethod" },
+    { label: "Returned at", key: "returnedAt" },
+    { label: "Returned by", key: "returnedBy" },
+  ];
+
+  doc.y = titleStartY;
+  doc.x = left;
+
+  function checkPageSpace(requiredHeight, label = "content") {
+    if (doc.y + requiredHeight <= contentBottom) {
+      return false;
+    }
+
+    drawFooter(doc);
+    console.log(`[PDF] addPage for ${label}`);
+    doc.addPage();
+    doc.y = startReportPage(doc, title, metaLines, { compact: true });
+    doc.x = left;
+    return true;
+  }
+
+  if (rows.length === 0) {
+    doc.font("Helvetica").fontSize(10).fillColor("#51605a");
+    doc.text("No records available for this report.", left, doc.y + 10);
+    drawFooter(doc);
+    doc.end();
+    return;
+  }
+
+  function fieldBlockHeight(field, row, width) {
+    const value = String(row?.[field.key] || "").trim() || "Not provided";
+    const labelHeight = doc.heightOfString(field.label, {
+      width,
+      align: "left",
+    });
+    const valueHeight = doc.heightOfString(value, {
+      width,
+      align: "left",
+    });
+    return Math.max(14, labelHeight) + Math.max(16, valueHeight) + 7;
+  }
+
+  function measureColumnHeight(fields, row, width) {
+    return fields.reduce((total, field) => total + fieldBlockHeight(field, row, width), 0);
+  }
+
+  function renderColumn(fields, row, x, y, width) {
+    let cursorY = y;
+
+    fields.forEach((field) => {
+      const value = String(row?.[field.key] || "").trim() || "Not provided";
+      const labelHeight = Math.max(
+        14,
+        doc.heightOfString(field.label, { width, align: "left" }),
+      );
+      const valueHeight = Math.max(
+        16,
+        doc.heightOfString(value, { width, align: "left" }),
+      );
+
+      doc.fillColor("#6f7f78").font("Helvetica-Bold").fontSize(8.3);
+      doc.text(field.label, x, cursorY, {
+        width,
+        lineBreak: false,
+        ellipsis: true,
+      });
+
+      doc.fillColor("#1d2b26").font("Helvetica").fontSize(8.9);
+      doc.text(value, x, cursorY + labelHeight + 2, {
+        width,
+        lineBreak: true,
+      });
+
+      cursorY += Math.max(labelHeight + valueHeight + 5, 22);
+    });
+
+    return cursorY;
+  }
+
+  function renderCard(row, x, y) {
+    const statusLabel = String(row.status || "").trim() || "open";
+    const titleText = String(row.title || "Untitled report");
+    const metaText = `${String(row.id || "").slice(0, 8)} • ${row.reporterLabel || "Reporter"} • ${row.returned === "Yes" ? "Returned" : "Open"}`;
+    const noteText = String(row.returnedNote || "").trim();
+
+    const leftHeight = measureColumnHeight(leftFields, row, fieldGroupWidth);
+    const rightHeight = measureColumnHeight(rightFields, row, fieldGroupWidth);
+    const noteHeight = noteText
+      ? doc.heightOfString(noteText, { width: cardWidth - cardPadding * 2, align: "left" })
+      : 0;
+
+    const bodyHeight = Math.max(leftHeight, rightHeight) + (noteText ? noteHeight + 10 : 0);
+    const cardHeight = cardPadding * 2 + 46 + bodyHeight + 12;
+
+    doc.save();
+    doc.roundedRect(x, y, cardWidth, cardHeight, 16).fill("#fffdf8");
+    doc.restore();
+
+    doc.save();
+    doc.roundedRect(x, y, cardWidth, cardHeight, 16);
+    doc.lineWidth(1).strokeColor("#eee3d4").stroke();
+    doc.restore();
+
+    const headerY = y + cardPadding;
+    doc.fillColor("#1d2b26").font("Helvetica-Bold").fontSize(11.2);
+    doc.text(titleText, x + cardPadding, headerY, {
+      width: cardWidth - cardPadding * 2 - pillWidth - 8,
+      lineBreak: false,
+      ellipsis: true,
+    });
+
+    doc.save();
+    doc.roundedRect(
+      x + cardWidth - cardPadding - pillWidth,
+      headerY - 1,
+      pillWidth,
+      18,
+      9,
+    );
+    doc.fillColor(statusLabel === "returned" ? "#e3f3ef" : "#f6f3ec").fill();
+    doc.restore();
+
+    doc.fillColor(statusLabel === "returned" ? "#0f6f60" : "#8b6b2d")
+      .font("Helvetica-Bold")
+      .fontSize(8.2);
+    doc.text(statusLabel.toUpperCase(), x + cardWidth - cardPadding - pillWidth + 2, headerY + 2, {
+      width: pillWidth - 4,
+      align: "center",
+      lineBreak: false,
+      ellipsis: true,
+    });
+
+    doc.fillColor("#8a9891").font("Helvetica").fontSize(8.1);
+    doc.text(metaText, x + cardPadding, headerY + 18, {
+      width: cardWidth - cardPadding * 2,
+      lineBreak: false,
+      ellipsis: true,
+    });
+
+    const columnsTop = headerY + 34;
+    renderColumn(leftFields, row, x + cardPadding, columnsTop, fieldGroupWidth);
+    renderColumn(
+      rightFields,
+      row,
+      x + cardPadding + fieldGroupWidth + columnGap,
+      columnsTop,
+      fieldGroupWidth,
+    );
+
+    if (noteText) {
+      doc.fillColor("#6f7f78").font("Helvetica-Bold").fontSize(8.1);
+      doc.text("Resolution note", x + cardPadding, y + cardHeight - cardPadding - noteHeight - 12, {
+        width: cardWidth - cardPadding * 2,
+      });
+      doc.fillColor("#1d2b26").font("Helvetica").fontSize(8.7);
+      doc.text(noteText, x + cardPadding, y + cardHeight - cardPadding - noteHeight - 2, {
+        width: cardWidth - cardPadding * 2,
+      });
+    }
+  }
+
+  for (let index = 0; index < rows.length; index += 2) {
+    const leftRow = rows[index];
+    const rightRow = rows[index + 1] || null;
+    const leftEstimate = measureColumnHeight(leftFields, leftRow, fieldGroupWidth) +
+      measureColumnHeight(rightFields, leftRow, fieldGroupWidth) +
+      88;
+    const rightEstimate = rightRow
+      ? measureColumnHeight(leftFields, rightRow, fieldGroupWidth) +
+        measureColumnHeight(rightFields, rightRow, fieldGroupWidth) +
+        88
+      : 0;
+    const pairHeight = Math.max(leftEstimate, rightEstimate || leftEstimate);
+
+    checkPageSpace(pairHeight + cardGap, `record pair ${Math.floor(index / 2) + 1}`);
+
+    const rowTop = doc.y;
+    renderCard(leftRow, left, rowTop);
+    if (rightRow) {
+      renderCard(rightRow, left + cardWidth + columnGap, rowTop);
+    }
+
+    doc.y = rowTop + pairHeight + rowGap;
+    doc.x = left;
+  }
+
+  drawFooter(doc);
   doc.end();
 }
 adminRouter.get("/overview", async (_req, res) => {
@@ -438,107 +656,6 @@ adminRouter.get("/overview", async (_req, res) => {
   }
 });
 
-adminRouter.get("/reports/summary", async (req, res) => {
-  try {
-    const days = clampDays(req.query?.days, 30);
-    const { startIso, endIso, keys } = buildDateRange(days);
-
-    const db = getDatabase();
-    const usersCollection = db.collection(USERS_COLLECTION);
-    const itemsCollection = db.collection(ITEMS_COLLECTION);
-
-    const [items, users] = await Promise.all([
-      itemsCollection
-        .find({ createdAt: { $gte: startIso, $lte: endIso } })
-        .project({ type: 1, createdAt: 1 })
-        .toArray(),
-      usersCollection
-        .find({ createdAt: { $gte: startIso, $lte: endIso } })
-        .project({ createdAt: 1 })
-        .toArray(),
-    ]);
-
-    const dayMap = new Map();
-    keys.forEach((key) => {
-      dayMap.set(key, {
-        date: key,
-        lostCount: 0,
-        foundCount: 0,
-        totalItems: 0,
-        newUsers: 0,
-      });
-    });
-
-    items.forEach((item) => {
-      const key = dateKeyFromIso(item.createdAt);
-      if (!key || !dayMap.has(key)) return;
-      const entry = dayMap.get(key);
-      if (item.type === "lost") {
-        entry.lostCount += 1;
-      } else if (item.type === "found") {
-        entry.foundCount += 1;
-      }
-      entry.totalItems += 1;
-    });
-
-    users.forEach((user) => {
-      const key = dateKeyFromIso(user.createdAt);
-      if (!key || !dayMap.has(key)) return;
-      dayMap.get(key).newUsers += 1;
-    });
-
-    const rows = Array.from(dayMap.values());
-    const format = String(req.query?.format || "").toLowerCase();
-
-    if (format === "csv") {
-      const filename = `reclaima-summary-${new Date().toISOString().slice(0, 10)}.csv`;
-      return sendCsv(res, filename, rows, [
-        "date",
-        "lostCount",
-        "foundCount",
-        "totalItems",
-        "newUsers",
-      ]);
-    }
-
-    if (format === "pdf") {
-      const filename = `reclaima-summary-${new Date().toISOString().slice(0, 10)}.pdf`;
-      const totalItems = rows.reduce((sum, row) => sum + row.totalItems, 0);
-      const totalUsers = rows.reduce((sum, row) => sum + row.newUsers, 0);
-      return sendPdf(
-        res,
-        filename,
-        "Summary Report",
-        [
-          `Generated: ${new Date().toISOString()}`,
-          `Range: ${startIso} to ${endIso}`,
-          `Total items: ${totalItems} | New users: ${totalUsers}`,
-        ],
-        [
-          { key: "date", label: "Date", width: 0.22 },
-          { key: "lostCount", label: "Lost", width: 0.18 },
-          { key: "foundCount", label: "Found", width: 0.18 },
-          { key: "totalItems", label: "Total", width: 0.2 },
-          { key: "newUsers", label: "New Users", width: 0.22 },
-        ],
-        rows,
-      );
-    }
-
-    res.status(200).json({
-      rangeDays: days,
-      startDate: startIso,
-      endDate: endIso,
-      rows,
-    });
-  } catch (error) {
-    console.error("Summary report error:", error);
-    res.status(500).json({
-      message: "Unable to generate summary report right now.",
-    });
-  }
-});
-
 adminRouter.get("/reports/items", async (req, res) => {
   try {
     const db = getDatabase();
@@ -560,64 +677,45 @@ adminRouter.get("/reports/items", async (req, res) => {
     const rows = items.map((item) => ({
       id: item._id?.toString?.() || item._id,
       type: item.type || "",
+      reporterLabel: item.type === "found" ? "Founder" : "Loser",
+      reporterName: item.contactName || "",
+      reporterEmail: item.contactEmail || "",
+      reporterPhone: item.contactPhone || "",
       status: item.status || "",
+      returned: item.status === "returned" ? "Yes" : "No",
+      returnedAt: item.returnedAt || "",
+      returnedBy: item.returnedBy || "",
+      returnedNote: item.returnedNote || "",
+      returnMethod: item.returnMethod || item.handoverMethod || "",
       title: item.title || "",
       category: item.category || "",
       location: item.location || "",
       zone: item.zone || "",
       createdAt: item.createdAt || "",
+      updatedAt: item.updatedAt || "",
     }));
 
-    const format = String(req.query?.format || "").toLowerCase();
-
-    if (format === "csv") {
-      const filename = `reclaima-items-${new Date().toISOString().slice(0, 10)}.csv`;
-      return sendCsv(res, filename, rows, [
-        "id",
-        "type",
-        "status",
-        "title",
-        "category",
-        "location",
-        "zone",
-        "createdAt",
-      ]);
-    }
-
-    if (format === "pdf") {
-      const filename = `reclaima-items-${new Date().toISOString().slice(0, 10)}.pdf`;
-      const pdfRows = rows.map((row) => ({
-        ...row,
-        id: String(row.id || "").slice(0, 8),
-      }));
-      return sendPdf(
-        res,
-        filename,
-        "Items Report",
-        [
-          `Generated: ${new Date().toISOString()}`,
-          `Range: ${startIso} to ${endIso}`,
-          `Filter: type=${type}, total=${rows.length}`,
-        ],
-        [
-          { key: "id", label: "ID", width: 0.12 },
-          { key: "type", label: "Type", width: 0.1 },
-          { key: "status", label: "Status", width: 0.1 },
-          { key: "title", label: "Title", width: 0.2 },
-          { key: "category", label: "Category", width: 0.14 },
-          { key: "location", label: "Location", width: 0.17 },
-          { key: "createdAt", label: "Created", width: 0.17 },
-        ],
-        pdfRows,
-      );
-    }
-
-    res.status(200).json({
-      rangeDays: days,
-      startDate: startIso,
-      endDate: endIso,
-      items: rows,
-    });
+    const filename = `reclaima-items-${new Date().toISOString().slice(0, 10)}.csv`;
+    return sendCsv(res, filename, rows, [
+      "id",
+      "type",
+      "reporterLabel",
+      "reporterName",
+      "reporterEmail",
+      "reporterPhone",
+      "status",
+      "returned",
+      "returnedAt",
+      "returnedBy",
+      "returnedNote",
+      "returnMethod",
+      "title",
+      "category",
+      "location",
+      "zone",
+      "createdAt",
+      "updatedAt",
+    ]);
   } catch (error) {
     console.error("Items report error:", error);
     res.status(500).json({
