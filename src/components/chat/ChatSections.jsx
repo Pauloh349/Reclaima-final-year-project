@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import NavBar from "../NavBar";
 import { getUserDisplayName, useAuthUser } from "../../hooks/useAuthUser";
+import userIcon from "../../assets/user-icon.png";
 
 export function ChatNavbar({
   chatId = "1",
@@ -78,7 +79,7 @@ export function ChatNavbar({
 
             <Link className="rc-navbar-user" to="/profile">
               <img
-                src="/src/assets/user-icon.jpg"
+                src={userIcon}
                 alt="Profile"
                 className="nav-avatar"
               />
