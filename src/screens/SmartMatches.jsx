@@ -27,8 +27,19 @@ export default function SmartMatches() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const handleViewItem = (item) => {
+    const itemId = String(item?._id || item?.id || "").trim();
+    if (!itemId) return;
+    navigate(`/item/${itemId}`);
+  };
+
   const handleMessageFinder = (item) => {
-    navigate("/chat/new", { state: { item } });
+    const itemId = String(item?._id || item?.id || "").trim();
+    navigate("/chat/new", {
+      state: {
+        item: itemId ? { ...item, _id: itemId, id: itemId } : item,
+      },
+    });
   };
 
   useEffect(() => {
@@ -150,27 +161,33 @@ export default function SmartMatches() {
               <p className="matches-muted">No matches yet.</p>
             ) : (
               <section className="matches-grid">
-                {matches.map((item) => (
-                  <MatchCard
-                    key={item._id || `${item.title}-${item.createdAt}`}
-                    image={item.photoUrl}
-                    title={item.title || "Untitled report"}
-                    category={item.category || "General"}
-                    location={item.location || item.zone || "No location"}
-                    date={
-                      item.createdAt
-                        ? new Date(item.createdAt).toLocaleDateString()
-                        : ""
-                    }
-                    confidence={95}
-                    status={
-                      item.matchSource?.title
-                        ? `Matched to ${item.matchSource.title}`
-                        : "Potential match"
-                    }
-                    onMessageFinder={() => handleMessageFinder(item)}
-                  />
-                ))}
+                {matches.map((item) => {
+                  const itemId = String(item?._id || item?.id || "").trim();
+
+                  return (
+                    <MatchCard
+                      key={itemId || `${item.title}-${item.createdAt}`}
+                      itemId={itemId}
+                      image={item.photoUrl}
+                      title={item.title || "Untitled report"}
+                      category={item.category || "General"}
+                      location={item.location || item.zone || "No location"}
+                      date={
+                        item.createdAt
+                          ? new Date(item.createdAt).toLocaleDateString()
+                          : ""
+                      }
+                      confidence={95}
+                      status={
+                        item.matchSource?.title
+                          ? `Matched to ${item.matchSource.title}`
+                          : "Potential match"
+                      }
+                      onViewItem={() => handleViewItem(item)}
+                      onMessageFinder={() => handleMessageFinder(item)}
+                    />
+                  );
+                })}
               </section>
             )}
           </>

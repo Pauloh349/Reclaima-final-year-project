@@ -296,6 +296,12 @@
   box-shadow: var(--shadow-glow);
 }
 
+.profile-btn.danger {
+  border: none;
+  background: linear-gradient(135deg, #b42318, #7a271a);
+  color: #fff7f5;
+}
+
 .profile-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
@@ -446,6 +452,25 @@
   color: var(--color-text-muted);
   font-size: 0.88rem;
   line-height: 1.55;
+}
+
+.profile-field-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.profile-field-hint {
+  flex: 1;
+}
+
+.profile-field-count {
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .profile-snapshot {
@@ -616,6 +641,28 @@
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(253, 248, 241, 0.92)),
     rgba(255, 255, 255, 0.92);
+}
+
+.profile-deletion-card {
+  border-color: rgba(180, 35, 24, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 245, 242, 0.94)),
+    rgba(255, 255, 255, 0.95);
+}
+
+.profile-deletion-card .profile-note a {
+  color: var(--color-primary-strong);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.profile-deletion-card .profile-note a:hover {
+  text-decoration: underline;
+}
+
+.deletion-actions {
+  justify-content: space-between;
+  align-items: center;
 }
 
 .profile-help-grid {

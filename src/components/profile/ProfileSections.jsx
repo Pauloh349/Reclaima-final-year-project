@@ -10,6 +10,7 @@ import userIcon from "../../assets/user-icon.png";
 import itemPlaceholder from "../../assets/default-image.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+const ACCOUNT_DELETION_EMAIL = "onlineapplications34@gmail.com";
 
 function getAuthToken() {
   try {
@@ -85,6 +86,30 @@ function getProfileCompletion(profile, itemCount) {
   return Math.min(100, Math.round(((completed + bonus) / 6) * 100));
 }
 
+function buildDeletionMailtoUrl(profile, reason) {
+  const supportEmail = ACCOUNT_DELETION_EMAIL;
+  const fullName = [profile?.firstName, profile?.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const subject = "Account deletion request";
+  const bodyLines = [
+    "Hello Reclaima team,",
+    "",
+    "I would like to request deletion of my account.",
+    "",
+    `Name: ${fullName || "Not provided"}`,
+    `Email: ${profile?.email || "Not provided"}`,
+    `Reason: ${reason || "No reason provided."}`,
+    "",
+    "Please confirm once the request has been processed.",
+  ];
+
+  return `mailto:${encodeURIComponent(supportEmail)}?subject=${encodeURIComponent(
+    subject,
+  )}&body=${encodeURIComponent(bodyLines.join("\n"))}`;
+}
+
 export function ProfileNavbar() {
   const user = useAuthUser();
   const displayName = getUserDisplayName(user);
@@ -129,6 +154,9 @@ export function Content() {
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [profileFeedback, setProfileFeedback] = useState("");
   const [passwordFeedback, setPasswordFeedback] = useState("");
+  const [deletionReason, setDeletionReason] = useState("");
+  const [deletionSaving, setDeletionSaving] = useState(false);
+  const [deletionFeedback, setDeletionFeedback] = useState("");
   const [profileErrors, setProfileErrors] = useState({});
   const [passwordErrors, setPasswordErrors] = useState({});
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -151,6 +179,7 @@ export function Content() {
     setLoading(true);
     setProfileFeedback("");
     setPasswordFeedback("");
+    setDeletionFeedback("");
 
     Promise.all([
       fetchJson(`${API_BASE}/api/auth/me`, {
@@ -276,6 +305,11 @@ export function Content() {
       delete nextErrors[name];
       return nextErrors;
     });
+  };
+
+  const handleDeletionReasonChange = (event) => {
+    setDeletionReason(event.target.value);
+    setDeletionFeedback("");
   };
 
   const validateProfileForm = () => {
@@ -418,6 +452,52 @@ export function Content() {
       setPasswordErrors(error.payload?.errors || {});
     } finally {
       setPasswordSaving(false);
+    }
+  };
+
+  const handleAccountDeletionRequest = async (event) => {
+    event.preventDefault();
+    setDeletionFeedback("");
+    setDeletionSaving(true);
+    const trimmedReason = deletionReason.trim();
+    const mailtoUrl = buildDeletionMailtoUrl(profile, trimmedReason);
+
+    try {
+      const payload = await fetchJson(
+        `${API_BASE}/api/auth/request-account-deletion`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...buildAuthHeaders(),
+          },
+          body: JSON.stringify({
+            reason: trimmedReason,
+          }),
+        },
+      );
+
+      setDeletionFeedback(payload.message || "Your deletion request has been sent.");
+      setDeletionReason("");
+    } catch (error) {
+      if (error.status === 401) {
+        handleLogout();
+        return;
+      }
+
+      try {
+        window.location.href = mailtoUrl;
+        setDeletionFeedback(
+          "We opened your email app with a prefilled deletion request to onlineapplications34@gmail.com. Please send it to complete the request.",
+        );
+        setDeletionReason("");
+      } catch {
+        setDeletionFeedback(
+          error.payload?.message || "Unable to send your deletion request right now.",
+        );
+      }
+    } finally {
+      setDeletionSaving(false);
     }
   };
 
@@ -691,6 +771,63 @@ export function Content() {
                   Sign out of this device
                 </button>
               </div>
+            </section>
+            <section className="profile-card profile-deletion-card">
+              <header className="profile-card-head">
+                <div>
+                  <span className="profile-card-kicker">Account removal</span>
+                  <h2>Delete your account</h2>
+                </div>
+              </header>
+
+              <form className="profile-form" onSubmit={handleAccountDeletionRequest} noValidate>
+                <p className="profile-note">
+                  Account deletion is handled by the support team. When you submit
+                  this request, we email{" "}
+                  <a href={`mailto:${ACCOUNT_DELETION_EMAIL}`}>{ACCOUNT_DELETION_EMAIL}</a>{" "}
+                  with your account details and optional reason.
+                </p>
+
+                <div className="profile-field">
+                  <label className="profile-field-label" htmlFor="deletion-reason">
+                    Optional reason
+                  </label>
+                  <div className="profile-textarea-wrap">
+                    <span className="material-icons">note_alt</span>
+                    <textarea
+                      id="deletion-reason"
+                      value={deletionReason}
+                      onChange={handleDeletionReasonChange}
+                      placeholder="Tell us why you'd like to delete your account"
+                      maxLength={500}
+                    />
+                  </div>
+                  <div className="profile-field-meta">
+                    <span className="profile-field-hint">
+                      This helps the support team confirm the request.
+                    </span>
+                    <span className="profile-field-count">
+                      {deletionReason.length}/500
+                    </span>
+                  </div>
+                </div>
+
+                {deletionFeedback ? <p className="form-feedback">{deletionFeedback}</p> : null}
+
+                <div className="profile-actions deletion-actions">
+                  <a className="profile-btn" href={`mailto:${ACCOUNT_DELETION_EMAIL}`}>
+                    Email support directly
+                  </a>
+                  <button
+                    type="submit"
+                    className="profile-btn danger"
+                    disabled={deletionSaving}
+                  >
+                    {deletionSaving ? "Sending..." : "Request deletion"}
+                    <span className="material-icons">delete_forever</span>
+                  </button>
+                </div>
+              </form>
             </section>
           </div>
 

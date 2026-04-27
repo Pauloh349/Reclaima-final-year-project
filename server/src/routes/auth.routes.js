@@ -4,6 +4,7 @@ import { promisify } from "node:util";
 
 import { getDatabase } from "../db/client.js";
 import {
+  sendAccountDeletionRequestEmail,
   sendAccountStatusEmail,
   sendPasswordResetEmail,
   sendVerificationEmail,
@@ -20,6 +21,7 @@ const PROFILE_BIO_MAX_LENGTH = 240;
 const PROFILE_TEXT_MAX_LENGTH = 80;
 const PROFILE_ID_MAX_LENGTH = 40;
 const PHONE_REGEX = /^[+()\-\d\s]{7,30}$/;
+const ACCOUNT_DELETION_EMAIL = "onlineapplications34@gmail.com";
 
 function normalizeEmail(email) {
   return String(email || "")
@@ -719,6 +721,56 @@ authRouter.patch("/change-password", async (req, res) => {
     console.error("Change password error:", error);
     return res.status(500).json({
       message: "Unable to update your password right now.",
+    });
+  }
+});
+
+authRouter.post("/request-account-deletion", async (req, res) => {
+  try {
+    const currentUser = await requireAuthenticatedUser(req, res);
+    if (!currentUser) return;
+
+    const reason = String(req.body?.reason || "").trim();
+
+    if (reason.length > 500) {
+      return res.status(400).json({
+        message: "Reason must be 500 characters or fewer.",
+        errors: {
+          reason: "Reason must be 500 characters or fewer.",
+        },
+      });
+    }
+
+    let emailSent = false;
+    try {
+      await sendAccountDeletionRequestEmail({
+        to: ACCOUNT_DELETION_EMAIL,
+        firstName: currentUser.firstName,
+        lastName: currentUser.lastName,
+        email: currentUser.email,
+        reason,
+      });
+      emailSent = true;
+    } catch (error) {
+      console.error("Account deletion request email error:", error);
+    }
+
+    if (!emailSent) {
+      return res.status(502).json({
+        message:
+          "We could not send your deletion request right now. Please try again later.",
+      });
+    }
+
+    return res.status(200).json({
+      message:
+        "Your deletion request has been emailed to the Reclaima support team.",
+      supportEmail: ACCOUNT_DELETION_EMAIL,
+    });
+  } catch (error) {
+    console.error("Account deletion request error:", error);
+    return res.status(500).json({
+      message: "Unable to send your deletion request right now.",
     });
   }
 });

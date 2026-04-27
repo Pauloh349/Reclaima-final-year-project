@@ -291,6 +291,35 @@ function buildMatchEmail({ lostItem, foundItem }) {
   return { subject, text, html };
 }
 
+function buildAccountDeletionRequestEmail({
+  firstName,
+  lastName,
+  email,
+  reason,
+}) {
+  const subject = `Account deletion request for ${email}`;
+  const displayName = [firstName, lastName].filter(Boolean).join(" ").trim();
+  const greeting = displayName ? `Hello Reclaima team,\n\n${displayName} (${email}) has requested account deletion.` : `Hello Reclaima team,\n\n${email} has requested account deletion.`;
+  const safeReason = formatValue(reason, "No reason provided.");
+  const text = `${greeting}\n\nRequest details:\n- Name: ${formatValue(displayName)}\n- Email: ${email}\n- Reason: ${safeReason}\n\nPlease review and delete the account if it meets your verification process.`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2933;">
+      <h2 style="margin: 0 0 12px;">Account Deletion Request</h2>
+      <p>${escapeHtml(greeting)}</p>
+      <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; background: #f8fafc;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="padding: 6px 0; width: 140px; color: #52606d;">Name</td><td style="padding: 6px 0;">${escapeHtml(formatValue(displayName))}</td></tr>
+          <tr><td style="padding: 6px 0; color: #52606d;">Email</td><td style="padding: 6px 0;">${escapeHtml(email)}</td></tr>
+          <tr><td style="padding: 6px 0; color: #52606d;">Reason</td><td style="padding: 6px 0;">${escapeHtml(safeReason)}</td></tr>
+        </table>
+      </div>
+      <p style="margin: 16px 0 0;">Please review and delete the account if it meets your verification process.</p>
+    </div>
+  `;
+
+  return { subject, text, html };
+}
+
 export async function sendVerificationEmail({ to, token, firstName }) {
   const transporter = buildTransporter();
   const { subject, text, html } = buildVerificationEmail({
@@ -339,6 +368,31 @@ export async function sendMatchEmail({ to, lostItem, foundItem }) {
     subject,
     text,
     html,
+  });
+}
+
+export async function sendAccountDeletionRequestEmail({
+  to,
+  firstName,
+  lastName,
+  email,
+  reason,
+}) {
+  const transporter = buildTransporter();
+  const { subject, text, html } = buildAccountDeletionRequestEmail({
+    firstName,
+    lastName,
+    email,
+    reason,
+  });
+
+  return transporter.sendMail({
+    from: getMailFrom(),
+    to,
+    subject,
+    text,
+    html,
+    replyTo: email || env.emailFrom,
   });
 }
 

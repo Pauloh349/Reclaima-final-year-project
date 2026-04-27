@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import "../styles/ItemDetails.css";
 import NavBar from "../components/NavBar";
 import UserBadge from "../components/UserBadge";
@@ -17,6 +17,7 @@ function formatDate(value) {
 
 export default function ItemDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -121,6 +122,38 @@ export default function ItemDetails() {
 
   const isReturned = pageData.status === "returned";
 
+  const chatState = useMemo(() => {
+    if (!item?._id) return {};
+    const itemId = String(item._id);
+    return {
+      item: {
+        ...item,
+        _id: itemId,
+        id: itemId,
+      },
+    };
+  }, [item]);
+
+  const handleStartClaim = () => {
+    if (!item?._id) return;
+    navigate("/chat/new", {
+      state: {
+        ...chatState,
+        context: "claim",
+      },
+    });
+  };
+
+  const handleMessageFinder = () => {
+    if (!item?._id) return;
+    navigate("/chat/new", {
+      state: {
+        ...chatState,
+        context: "message",
+      },
+    });
+  };
+
   return (
     <div className="item-page">
       <NavBar
@@ -210,15 +243,26 @@ export default function ItemDetails() {
               </div>
 
               <div className="action-card">
-                <button className="btn-primary-action">
+                <button
+                  type="button"
+                  className="btn-primary-action"
+                  onClick={handleStartClaim}
+                  disabled={!item}
+                >
                   <span className="material-icons">task_alt</span>
                   Start Claim
                 </button>
-                <button className="btn-secondary-action">
+                <button
+                  type="button"
+                  className="btn-secondary-action"
+                  onClick={handleMessageFinder}
+                  disabled={!item}
+                >
                   <span className="material-icons">forum</span>
                   Message Finder
                 </button>
                 <button
+                  type="button"
                   className="btn-secondary-action"
                   onClick={handleMarkReturned}
                   disabled={isReturned || updating}

@@ -1,6 +1,7 @@
 import placeholderImage from "../../assets/default-image.png";
 
 function MatchCard({
+  itemId,
   image,
   title,
   category,
@@ -8,6 +9,7 @@ function MatchCard({
   date,
   confidence = 0,
   status,
+  onViewItem,
   onMessageFinder,
 }) {
   const confidenceClass = confidence >= 90 ? "high" : "medium";
@@ -40,8 +42,15 @@ function MatchCard({
         <p className="match-status">{status}</p>
 
         <div className="match-actions">
-          <button className="match-btn solid">View Item</button>
-          <button className="match-btn" onClick={onMessageFinder}>
+          <button
+            type="button"
+            className="match-btn solid"
+            onClick={onViewItem}
+            disabled={!itemId || !onViewItem}
+          >
+            View Item
+          </button>
+          <button type="button" className="match-btn" onClick={onMessageFinder}>
             Message Finder
           </button>
         </div>
