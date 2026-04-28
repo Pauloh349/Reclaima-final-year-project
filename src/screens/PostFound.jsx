@@ -281,17 +281,6 @@ const ReportFound = () => {
           </p>
         )}
 
-        <section className="form-section">
-          <label>
-            Add a Photo <span>(Optional)</span>
-          </label>
-          <div className="upload-box">
-            <span className="material-icons upload-icon">add_a_photo</span>
-            <p>Upload a clear photo</p>
-            <small>PNG, JPG up to 10MB</small>
-          </div>
-        </section>
-
         <section className="safety-note">
           <span className="material-icons">verified_user</span>
           <p>

@@ -1065,4 +1065,3 @@ For best results:
 - Update item status after returns are completed.
 
 If you want, I can also turn this into a polished PDF-style layout next, or add a cover page, screenshots, and branding so it matches a formal university manual even more closely.
-
