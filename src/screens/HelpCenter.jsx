@@ -1,9 +1,48 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import UserBadge from "../components/UserBadge";
 import "../styles/HelpCenter.css";
 
+const SUPPORT_EMAIL = "onlineapplications34@gmail.com";
+const WHATSAPP_NUMBER = "254794300699";
+
 const HelpCenter = () => {
+  const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isSupportDialogOpen) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsSupportDialogOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isSupportDialogOpen]);
+
+  const openWhatsApp = () => {
+    const message = encodeURIComponent(
+      "Hi Reclaima support, I need help with the Help Center.",
+    );
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    setIsSupportDialogOpen(false);
+  };
+
+  const openEmail = () => {
+    const subject = encodeURIComponent("Reclaima support request");
+    const body = encodeURIComponent(
+      "Hello Reclaima support,\n\nI need help with the Help Center.\n\nName:\nEmail:\nIssue:\n",
+    );
+    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+    setIsSupportDialogOpen(false);
+  };
+
   return (
     <div className="help-page">
       <NavBar
@@ -89,12 +128,83 @@ const HelpCenter = () => {
               <Link to="/terms">community guidelines</Link>.
             </p>
           </div>
-          <button className="primary-btn">
+          <button
+            type="button"
+            className="primary-btn"
+            onClick={() => setIsSupportDialogOpen(true)}
+          >
             Contact Support
             <span className="material-icons">arrow_forward</span>
           </button>
         </section>
       </main>
+
+      {isSupportDialogOpen ? (
+        <div
+          className="help-modal-backdrop"
+          role="presentation"
+          onClick={() => setIsSupportDialogOpen(false)}
+        >
+          <section
+            className="help-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="help-support-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="help-modal-head">
+              <div>
+                <span className="eyebrow">Contact support</span>
+                <h2 id="help-support-title">Choose how to reach us</h2>
+                <p>
+                  WhatsApp is faster. Email is available if your message can
+                  wait a little longer.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="help-modal-close"
+                onClick={() => setIsSupportDialogOpen(false)}
+                aria-label="Close support options"
+              >
+                <span className="material-icons">close</span>
+              </button>
+            </header>
+
+            <div className="help-modal-options">
+              <button
+                type="button"
+                className="help-option help-option-primary"
+                onClick={openWhatsApp}
+              >
+                <span className="help-option-icon">
+                  <span className="material-icons">chat</span>
+                </span>
+                <span>
+                  <strong>WhatsApp support</strong>
+                  <small>Fastest option for quick help</small>
+                </span>
+                <span className="help-option-meta">0794300699</span>
+              </button>
+
+              <button
+                type="button"
+                className="help-option"
+                onClick={openEmail}
+              >
+                <span className="help-option-icon">
+                  <span className="material-icons">mail</span>
+                </span>
+                <span>
+                  <strong>Email support</strong>
+                  <small>Best for longer requests or details</small>
+                </span>
+                <span className="help-option-meta">{SUPPORT_EMAIL}</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       <footer className="help-footer">
         <span>© 2026 Reclaima University Platform</span>
