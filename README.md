@@ -38,3 +38,26 @@ Copy `.env.example` to `.env` and update values as needed:
 - `CORS_ORIGIN=http://localhost:5173`
 - `MONGODB_URI=<your-mongodb-connection-string>`
 - `MONGODB_DB_NAME=reclaima`
+
+## Deployment
+
+### Frontend on Vercel
+
+- Set the project root to the repo root.
+- Build command: `npm run build`
+- Output directory: `dist`
+- Add this environment variable in Vercel:
+  - `VITE_API_BASE_URL=https://<your-render-service>.onrender.com`
+- Keep `vercel.json` in the repo root so React Router routes resolve to `index.html`.
+
+### Backend on Render
+
+- Use the repo root as the service root.
+- Start command: `npm start`
+- Build command: `npm ci`
+- Add these environment variables in Render:
+  - `MONGODB_URI`
+  - `MONGODB_DB_NAME`
+  - `APP_BASE_URL=https://<your-vercel-project>.vercel.app`
+  - `CORS_ORIGIN=https://<your-vercel-project>.vercel.app`
+  - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE`, `EMAIL_FROM` if email features are enabled

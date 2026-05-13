@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "../styles/signup.css";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+
 const VerifyEmail = () => {
   const location = useLocation();
   const query = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -18,7 +20,7 @@ const VerifyEmail = () => {
     setStatus("verifying");
     setMessage("");
 
-    fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`)
+    fetch(`${API_BASE}/api/auth/verify-email?token=${encodeURIComponent(token)}`)
       .then(async (response) => {
         const payload = await response.json().catch(() => ({}));
         if (!isMounted) return;
@@ -55,7 +57,7 @@ const VerifyEmail = () => {
     setIsResending(true);
 
     try {
-      const response = await fetch("/api/auth/resend-verification", {
+      const response = await fetch(`${API_BASE}/api/auth/resend-verification`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

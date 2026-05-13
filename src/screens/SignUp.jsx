@@ -5,6 +5,7 @@ import { notifyAuthUserChanged } from "../hooks/useAuthUser";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NAME_REGEX = /^[\p{L}]+(?:[ '-][\p{L}]+)*$/u;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -109,7 +110,7 @@ const SignUp = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/signup", {
+      const response = await fetch(`${API_BASE}/api/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -4,6 +4,7 @@ import "../styles/SignIn.css";
 import "../styles/ResetPassword.css";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
 
 const ResetPassword = () => {
   const location = useLocation();
@@ -93,7 +94,9 @@ const ResetPassword = () => {
 
     try {
       const response = await fetch(
-        isTokenMode ? "/api/auth/reset-password" : "/api/auth/request-password-reset",
+        isTokenMode
+          ? `${API_BASE}/api/auth/reset-password`
+          : `${API_BASE}/api/auth/request-password-reset`,
         {
           method: "POST",
           headers: {

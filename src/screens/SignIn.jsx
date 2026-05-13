@@ -4,6 +4,7 @@ import "../styles/SignIn.css";
 import { notifyAuthUserChanged } from "../hooks/useAuthUser";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ const SignIn = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/signin", {
+      const response = await fetch(`${API_BASE}/api/auth/signin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
