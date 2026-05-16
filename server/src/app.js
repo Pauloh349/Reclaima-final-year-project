@@ -9,9 +9,14 @@ import matchesRouter from "./routes/matches.routes.js";
 import chatsRouter from "./routes/chats.routes.js";
 import notificationsRouter from "./routes/notifications.routes.js";
 
+const corsOptions = {
+  origin: env.corsOrigins,
+};
+
 const app = express();
 
-app.use(cors({ origin: env.corsOrigins }));
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 
 app.get("/", (_req, res) => {

@@ -94,7 +94,9 @@ const SignIn = () => {
         setFeedback(payload.message || "Signin failed. Please try again.");
 
         if (payload.requiresEmailVerification) {
-          navigate(`/verify-email?email=${encodeURIComponent(formData.email.trim().toLowerCase())}`);
+          navigate(
+            `/verify-email?email=${encodeURIComponent(formData.email.trim().toLowerCase())}`,
+          );
         }
 
         return;
@@ -151,7 +153,9 @@ const SignIn = () => {
                 className={errors.email ? "input-error" : ""}
               />
             </div>
-            {errors.email ? <p className="field-error">{errors.email}</p> : null}
+            {errors.email ? (
+              <p className="field-error">{errors.email}</p>
+            ) : null}
 
             <label htmlFor="signin-password">Password</label>
             <div className="input-row password-row">
@@ -177,7 +181,9 @@ const SignIn = () => {
                 </span>
               </button>
             </div>
-            {errors.password ? <p className="field-error">{errors.password}</p> : null}
+            {errors.password ? (
+              <p className="field-error">{errors.password}</p>
+            ) : null}
 
             <label className="robot-row" htmlFor="signin-human-check">
               <input
@@ -190,11 +196,17 @@ const SignIn = () => {
               />
               <span>I am not a robot.</span>
             </label>
-            {errors.humanCheck ? <p className="field-error">{errors.humanCheck}</p> : null}
+            {errors.humanCheck ? (
+              <p className="field-error">{errors.humanCheck}</p>
+            ) : null}
 
             {feedback ? <p className="form-feedback">{feedback}</p> : null}
 
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Signing in..." : "Continue"}
               <span className="material-icons">arrow_forward</span>
             </button>
@@ -205,7 +217,8 @@ const SignIn = () => {
               New to Reclaima? <Link to="/signup">Create an account</Link>
             </p>
             <p>
-              Forgot your password? <Link to="/reset-password">Reset it here</Link>
+              Forgot your password?{" "}
+              <Link to="/reset-password">Reset it here</Link>
             </p>
           </footer>
         </section>

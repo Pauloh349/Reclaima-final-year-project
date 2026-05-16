@@ -7,12 +7,13 @@ function readEnv(value, fallback = "") {
 }
 
 function parseCorsOrigins(value) {
+  const defaults = ["http://localhost:5173", "https://reclaima-final-year-project.vercel.app"];
   const raw = readEnv(value);
   const list = raw
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean);
-  return list.length ? list : ["http://localhost:5173"];
+  return [...new Set([...defaults, ...list])];
 }
 
 export const env = {
